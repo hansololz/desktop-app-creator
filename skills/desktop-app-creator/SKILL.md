@@ -98,8 +98,14 @@ workspaces/<app-name>/
     ├── main.py          # the app entry point
     ├── build.{sh,bat}   # build script that produces the native artifact
     ├── resources/       # static assets, prompts, schemas, scheduler config, fixtures
+    │   └── icon.*       # default icon, seeded at scaffold time (replaced if user-provided)
     └── dist/            # built artifact lands here (gitignored)
 ```
+
+The scaffold seeds `resources/` with the bundled default icon for the host OS, so every app ships
+looking finished and the build's `--icon` flag resolves without the user producing art. The Icon
+interview question only decides whether the user overwrites it (see `references/interview.md` and
+`references/packaging.md`).
 
 Three anchor docs carry the project: `APP.md` is the behavioral contract and the test spec;
 `AUTHORING.md` records the request and the decisions (so an edit doesn't re-derive intent);
@@ -328,6 +334,10 @@ Read these as the stage that needs them comes up — they hold the detail SKILL.
 Scripts and assets:
 
 - **`scripts/setup_workspace.py`** — scaffolds the project directory; auto-detects the host OS;
-  `--add-os` adds a sibling OS folder without clobbering an existing one.
+  `--add-os` adds a sibling OS folder without clobbering an existing one; seeds `resources/` with the
+  default icon for that OS.
 - **`assets/README.md.template`**, **`assets/APP.md.template`**, **`assets/AUTHORING.md.template`**
   — starting points for the anchor docs (the setup script lays these down for you).
+- **`assets/icon.{png,icns,ico,svg}`** — the bundled default app icon. The setup script copies the
+  format(s) the host OS needs into each app's `resources/`, so every app has an icon wired into its
+  build unless the user supplies their own.

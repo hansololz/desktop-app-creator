@@ -127,7 +127,11 @@ The defaults cover both *technology* and *theme*:
   at many.
 - **Theme.** A consistent default visual style (layout, typography, color, iconography) so apps
   look coherent without the user having to specify design. The user can override it, but never has
-  to.
+  to. Iconography is part of this: the skill ships a real default icon and the scaffold wires it into
+  every app it generates, so an app looks finished — and its build's `--icon` flag resolves — without
+  the user ever producing art. A user who has their own icon overrides the default; one who doesn't
+  still ships something that looks intentional. Leaving apps icon-less by default would push design
+  work back onto the user for no benefit, which is exactly what opinionated defaults exist to avoid.
 
 These choices are made through a short **interview**. The skill presents each decision as a small
 list of options with one marked *recommended* and pre-selected, so the user can skim, accept, or

@@ -34,11 +34,18 @@ have Python 3.11 is an app they won't run.
 The build script lives in the OS folder and produces the artifact under `dist/`. You're only ever
 building for the host OS — cross-compilation is out.
 
+**The icon is always present.** The scaffold seeds `resources/` with the bundled default icon for
+the host OS (`icon.icns` + `icon.png` on macOS, `icon.ico` on Windows, `icon.png` on Linux), so the
+`--icon` flags below always resolve — you never build an app without an icon. A user who supplied
+their own art during the interview has overwritten `resources/icon.*`; either way the build just
+points `--icon` at the file that's there.
+
 ### macOS (`build.sh`)
 
 - PyInstaller `--onefile --windowed` (drop `--windowed` for headless) → `.app` bundle (or bare
   binary for CLI). Set the bundle name to the display name.
-- Icon: `--icon resources/icon.icns`.
+- Icon: `--icon resources/icon.icns` (prefer the `.icns`; fall back to `resources/icon.png` if no
+  `.icns` is present). Both ship by default, so this resolves out of the box.
 - Note in `macos-specific.md`: **Gatekeeper** will quarantine an unsigned app downloaded from the
   web; the user may need `xattr -dr com.apple.quarantine "Receipt Filer.app"` or a right-click→Open.
   Signing/notarization is out of scope by default (`design.md` → "Future work") — record the

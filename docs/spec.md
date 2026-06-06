@@ -149,9 +149,13 @@ and the per-option rationales for each.
   implies (a digest that runs every morning wants headless; a thing the user pokes at wants a window). Headless and
   windowed are mutually exclusive; a tray item can pair with either. If they pick a windowed interface, the UI-framework
   and color-theme questions follow; if not, skip those.
-- **Icon.** Default desktop-app-creator icon (recommended, offered first) or user-provided. Most users don't have one
-  ready and the bundled icon is good enough to ship — making them produce art before they've seen their app run is the
-  wrong trade. Skip entirely for a headless app with no icon surface.
+- **Icon.** Default desktop-app-creator icon (recommended, offered first) or user-provided. The default is a real,
+  bundled asset that ships with the skill (`assets/icon.{png,icns,ico,svg}`), and the scaffold copies it into every new
+  app's `resources/` automatically — so an app *always* has the default icon wired into its build unless the user
+  replaces it. Most users don't have one ready and the bundled icon is good enough to ship — making them produce art
+  before they've seen their app run is the wrong trade. Choosing user-provided simply overwrites `resources/icon.*` with
+  the user's image; the build picks up whatever is there. Skip the *question* entirely for a headless app with no icon
+  surface — but the scaffold still drops the default in, harmless and ready if a window is added later.
 - **Run model / scheduling** (multi-select, not mutually exclusive): run on demand, run on a schedule, or start on
   system startup. A scheduled or startup app gets native scheduler config generated for it — a launchd `.plist` on
   macOS, a Task Scheduler XML on Windows, a `.desktop` autostart entry on Linux — written into `resources/` with a short
@@ -315,8 +319,14 @@ root/workspaces/<app-name>/
     ├── main.py           # the app entry point
     ├── build.{sh,bat}    # build script that produces the native artifact
     ├── resources/        # static assets, prompts, schemas, scheduler config, fixtures
+    │   └── icon.*        # the default icon, copied in at scaffold time (replaced if user-provided)
     └── dist/             # built artifact lands here (gitignored)
 ```
+
+The scaffold seeds `resources/` with the bundled default icon for the host OS (`icon.icns` + `icon.png` on
+macOS, `icon.ico` on Windows, `icon.png` on Linux), so every app ships with a finished-looking icon by default
+and the build's `--icon` flag always resolves. The Icon interview question only decides whether the user
+overwrites that file with their own art; it never has to *produce* an icon for the build to work.
 
 Then fill in `APP.md` (keep the `name`/`description` frontmatter — it's what makes the file readable to a later edit and
 to anyone auditing the app), `AUTHORING.md`, the `<os>-specific.md`, and `main.py`. From `APP.md`, write `main.py` as

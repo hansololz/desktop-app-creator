@@ -52,6 +52,7 @@ if sys.version_info < (3, 5):
 import argparse
 import platform
 import re
+import shutil
 from datetime import date
 from pathlib import Path
 
@@ -148,6 +149,19 @@ def recover_display_name(app_dir: Path, fallback: str) -> str:
 # if the assets are missing.
 
 ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
+
+# The bundled default icon, applied to every app so it ships looking finished and
+# the build's --icon flag always resolves without the user producing art (see
+# docs/design.md -> "Theme" and docs/spec.md -> "Icon"). Per host OS we copy the
+# formats that OS's packager wants: macOS PyInstaller prefers .icns (with .png as
+# a fallback the build already understands), Windows wants .ico, Linux uses the
+# .png for the .desktop entry. A user-provided icon simply overwrites these files
+# in resources/ later — the build picks up whatever is there.
+DEFAULT_ICON_ASSETS = {
+    "macos": ["icon.icns", "icon.png"],
+    "windows": ["icon.ico"],
+    "linux": ["icon.png"],
+}
 
 
 def render_template(filename: str, fallback: str, ctx: dict) -> str:
@@ -339,6 +353,38 @@ def write_file(path: Path, content: str, *, executable: bool = False) -> None:
             )
 
 
+def copy_default_icon(resources_dir: Path, os_name: str) -> None:
+    """Seed resources/ with the bundled default icon for this OS.
+
+    Every app gets the default icon wired in at scaffold time so it looks
+    finished and the build's --icon flag resolves without the user producing
+    art. Degrades rather than breaks (the same rule the rest of this script
+    follows): a missing bundled asset or a copy that the filesystem rejects is
+    warned and skipped, leaving the app to build without a default icon rather
+    than aborting the scaffold. A user-provided icon later overwrites these.
+    """
+    for filename in DEFAULT_ICON_ASSETS.get(os_name, []):
+        src = ASSETS_DIR / filename
+        dst = resources_dir / filename
+        try:
+            if not src.is_file():
+                sys.stderr.write(
+                    "warning: bundled default icon %s not found in assets/; "
+                    "skipping it. The app can still build, just without a "
+                    "default icon until one is added to resources/.\n" % filename
+                )
+                continue
+            if dst.exists():
+                continue
+            shutil.copy2(str(src), str(dst))
+        except OSError as exc:
+            sys.stderr.write(
+                "warning: could not copy default icon %s (%s); the build will "
+                "fall back to no icon until one is added to resources/.\n"
+                % (filename, exc)
+            )
+
+
 def scaffold_os_folder(app_dir: Path, os_name: str, ctx: dict) -> Path:
     os_dir = app_dir / os_name
     if os_dir.exists():
@@ -362,6 +408,9 @@ def scaffold_os_folder(app_dir: Path, os_name: str, ctx: dict) -> Path:
 
     # resources/ kept in git; dist/ is build output, gitignored.
     write_file(os_dir / "resources" / ".gitkeep", "")
+    # Seed the default icon so every app ships with one wired in (replaced if
+    # the user provides their own during the interview).
+    copy_default_icon(os_dir / "resources", os_name)
     write_file(os_dir / "dist" / ".gitignore", "*\n!.gitignore\n")
     return os_dir
 
@@ -436,7 +485,8 @@ def main() -> int:
 
     print(f"Scaffolded {display_name} at {app_dir}")
     print(f"  common: APP.md, AUTHORING.md, README.md")
-    print(f"  {os_name}: {os_dir.name}/ (main.py, {build_script_name(os_name)}, resources/, dist/)")
+    print(f"  {os_name}: {os_dir.name}/ (main.py, {build_script_name(os_name)}, "
+          f"resources/ [default icon seeded], dist/)")
     print("Next: fill APP.md / AUTHORING.md / "
           f"{os_name}-specific.md from the interview, then generate main.py.")
     return 0

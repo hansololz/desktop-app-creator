@@ -81,12 +81,19 @@ question (10); if not, skip those.**
 
 ### 3. Icon
 
-Skip entirely for a headless app with no icon surface.
+The scaffold already copies the bundled default icon (`assets/icon.{png,icns,ico,svg}`) into the
+app's `resources/` for the host OS, so every app *starts* with a finished-looking icon wired into
+its build. This question only decides whether the user replaces it. Skip the question entirely for a
+headless app with no icon surface — the default still sits in `resources/`, harmless and ready if a
+window is added later.
 
-- **Default desktop-app-creator icon (recommended)** — offered first; good enough to ship. Most
-  users don't have art ready, and making them produce it before they've seen the app run is the
-  wrong trade.
-- **User-provided** — they have a `.png`/`.icns`/`.ico` they want to use.
+- **Default desktop-app-creator icon (recommended)** — offered first; good enough to ship, and
+  already in place, so picking it means doing nothing. Most users don't have art ready, and making
+  them produce it before they've seen the app run is the wrong trade.
+- **User-provided** — they have a `.png`/`.icns`/`.ico` they want to use. Drop it into the app's
+  `resources/` as `icon.<ext>`, overwriting the default for that format; the build picks up whatever
+  is there. (On macOS, replace both `icon.icns` and `icon.png` if you have them, or just the
+  `.icns` — the build prefers `.icns` and falls back to `.png`.)
 
 ### 4. Run model / scheduling (multi-select — not mutually exclusive)
 
