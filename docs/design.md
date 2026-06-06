@@ -56,10 +56,23 @@ The design bets on three trends:
 ## Requirements
 
 - **Plain-language input.** A user describes a task and receives a runnable program.
-- **Local-first execution.** Programs run on the user's machine, with no hosted dependency at run
-  time.
+- **Local-first execution.** Programs run on the user's machine with no hosted dependency at run
+  time, unless a specific step has explicitly opted into a hosted model at authoring time.
 - **Single-purpose programs.** Each program does exactly one thing.
-- **Native per-OS builds.** Each program is built into a native artifact for the target OS.
+- **Native per-OS builds.** Each program is built into a native artifact for the OS the skill is
+  running on. Cross-compilation is out of scope — building the same app for a second OS means
+  re-running the skill on that OS (see *Target OS is the host OS*).
+- **Editable after the fact.** An app can be changed later without starting from a blank page; the
+  project carries enough recorded intent to regenerate or patch it (see *Editing existing apps*).
+
+## Non-Requirements
+
+These are explicitly out of scope, listed so they don't get re-litigated:
+
+- A general-purpose IDE or scripting platform.
+- Multi-screen applications, servers, or long-running daemons.
+- Multi-user software.
+- A marketplace, an auto-updater, or a GUI for the skill itself. (Some appear under *Future work*.)
 
 ## Solution
 
@@ -75,20 +88,24 @@ The skill sets up a working directory per app under `workspaces/`:
 workspaces/<desktop-app-name>/
     README.md            # what the app does, how to run it (for the user)
     AUTHORING.md         # the original request + authoring decisions (for the model and future edits)
-    APP.md               # the app's contract: inputs, outputs, behavior
-    <os>/                # one directory per target OS (e.g. macos, windows, linux)
-        <os>-specific.md # OS-specific notes: dependencies, entitlements, signing
+    APP.md               # the app's contract: inputs, outputs, behavior, per-step tier
+    <os>/                # one directory per host OS the skill has run on (e.g. macos, windows, linux)
+        <os>-specific.md # OS-specific notes: dependencies, entitlements, signing, scheduler config
         main.py          # the app entry point
         build.{sh,bat}   # build script that produces the native artifact
-        resources/       # static assets bundled into the app
+        resources/       # static assets, prompts, scheduler config, fixtures
         dist/            # build output (gitignored)
 ```
 
 Three Markdown files anchor the project. `AUTHORING.md` captures the original request and the
 decisions the model made, so the app can be regenerated or edited later without re-deriving intent.
-`APP.md` is the behavioral contract — the inputs the app accepts, the outputs it produces, and the
-success conditions — and is what tests are written against. `README.md` is the human-facing
-description.
+`APP.md` is the behavioral contract — the inputs the app accepts, the outputs it produces, the
+success conditions, and the execution tier chosen for each step — and is what tests are written
+against. `README.md` is the human-facing description. These three files are OS-agnostic and capture
+everything true of the app regardless of platform; anything tied to a specific OS drops one level
+down into `<os>/<os>-specific.md`. Because the OS-specific notes live in their own folder, building
+the same app on a second OS later adds a sibling `<os>/` folder beside the first, reusing the common
+files and re-asking only the OS-specific questions (see *Target OS is the host OS*).
 
 ### Opinionated defaults & the interview
 
@@ -119,8 +136,10 @@ swap. Typical questions:
 - **Interface.** Headless/scheduled · menu-bar/tray · simple window *(recommended depends on the
   task)*.
 - **Theme.** Default theme *(recommended)* · light · dark · minimal.
-- **Run model.** On a schedule *(recommended for digests/monitors)* · on demand.
-- **Inference.** Deterministic only *(recommended when possible)* · local model for specific steps.
+- **Run model.** On a schedule *(recommended for digests/monitors)* · on demand. A scheduled app
+  gets native scheduler config generated for it (see *Scheduling*).
+- **Inference.** Deterministic only *(recommended when possible)* · local model for specific steps ·
+  hosted model for steps a local model can't handle reliably (see *Tiered execution*).
 
 The interview is kept short — only decisions that meaningfully change the app are asked, and
 anything the user's request already implies is skipped. The answers, together with the defaults for
@@ -141,7 +160,7 @@ Authoring runs once, in four stages:
 
 2. **Generate.** From `APP.md`, the model writes `main.py` and any resources. The app is plain,
    deterministic code wherever possible; a model call at run time is introduced only for the steps
-   that genuinely need one (see *Local LLM runtime*).
+   that genuinely need one (see *Tiered execution* and *Run-time inference*).
 
 3. **Build.** The per-OS `build.{sh,bat}` script packages the app and its dependencies into a
    native artifact under `dist/` (see *Build & packaging*).
@@ -158,27 +177,65 @@ The split is deliberate: intelligence is spent once at authoring time and amorti
 subsequent run. A daily-digest app authored once runs every morning for months with no model and
 no network beyond the sources it was told to read.
 
-### Local LLM runtime
+### Tiered execution
 
-Some tasks can't be made fully deterministic — summarizing a page, classifying whether a change is
-"interesting," extracting a field from unstructured text. For these, the app calls a *local* model
-at run time.
+Not every step is equal. Parsing a date out of a filename is exact; deciding whether a page change
+is "interesting" is fuzzy; summarizing a fifty-page document well needs a capable model. So each
+step of an app is assigned one of three tiers, cheapest first:
 
-- **Interface.** The app talks to the model through a thin local abstraction (e.g. an OpenAI-
-  compatible endpoint served by a local runtime such as Ollama or llama.cpp). The app depends on
-  the interface, not on a specific model, so the model can be swapped without regenerating the app.
-- **Detection at authoring time.** During *Generate*, the model decides which steps need run-time
-  inference and isolates them behind that interface. Everything else stays deterministic. `APP.md`
-  records which steps are model-backed so the dependency is explicit.
-- **Model resolution.** The app declares a capability requirement (e.g. "summarization, ~7B class")
-  rather than hard-coding a model name. At first run it resolves that to a model already available
-  locally, prompting the user to pull one only if nothing suitable exists.
-- **Graceful degradation.** If no local model is available, the app fails with a clear message and,
-  where possible, falls back to a deterministic approximation rather than silently producing bad
+| Tier          | Mechanism                                    | Use for                                              |
+|---------------|----------------------------------------------|------------------------------------------------------|
+| Deterministic | Plain code (regex, parser, HTTP call)        | Anything expressible as a precise rule               |
+| Local model   | A local LLM on the user's machine            | Fuzzy classification, small summaries, extraction    |
+| Hosted model  | A hosted LLM called with the user's API key  | Steps that genuinely need frontier-model judgment    |
+
+The skill tries the cheapest tier that can do the job and only escalates a step when the tier below
+genuinely can't handle it. The point isn't only run-time cost — it's to make "just call a model" an
+uncomfortable default at authoring time, so the generated app stays deterministic wherever it can.
+A model call where a regex would do is a bug. Each tier above also costs availability: a hosted step
+needs the network and a provider that hasn't changed its terms; a local step needs a model present;
+a deterministic step needs neither.
+
+Two clarifications about what "cheapest first" means here:
+
+- **It's per step, not per app.** The tier is chosen for each individual step the app performs, not
+  for the app as a whole. One app commonly mixes tiers — deterministic for most steps, a local model
+  for the one fuzzy step, a hosted model for a step that needs frontier judgment. The skill does not
+  pick a single tier and build the whole app with it.
+- **It decides what the built app does, not how the app is authored.** The escalation describes the
+  implementation baked into the generated app's run-time behavior. The skill itself always uses a
+  model to do the generation; the tiers control how much intelligence ends up inside the *output*
+  app, with the goal of pushing as much as possible down to plain deterministic code.
+
+**Tiers are pinned at authoring time, not chosen at run time.** During *Generate*, the model decides
+each step's tier and records it in `APP.md`. The run-time app does **not** silently promote a
+struggling step to a higher tier — if a local model wasn't good enough for a step, that is caught and
+fixed during authoring and validation, not papered over on the user's machine. The one exception is a
+step whose input genuinely varies in shape (a clean PDF vs. a photo of one), which is wired with an
+explicit, opt-in fallback that names both paths in `APP.md`.
+
+### Run-time inference
+
+For steps on the local or hosted tier, the app reaches for a model at run time.
+
+- **Interface, not a model.** The app talks to a model through a thin abstraction — for local steps,
+  an OpenAI-compatible endpoint served by a runtime such as Ollama or llama.cpp; for hosted steps, a
+  provider SDK. The app depends on the interface, so the model can be swapped without regenerating
+  the app.
+- **Model-first selection.** Local models are chosen model-first: the skill picks a model that fits
+  the step — proposing the *currently popular* fitting model rather than a memorized name, since
+  model identifiers churn quickly — and only then picks the runtime to serve it. The default is to
+  pin a specific model per app (recorded in `APP.md` and `<os>-specific.md`), but a windowed app can
+  instead expose a model picker in its settings so the user chooses at run time.
+- **Hosted keys.** A hosted step prompts for the user's API key on first need and stores it in the OS
+  keyring; the user can also supply keys ahead of time so the prompt never appears. An app with no
+  hosted steps never prompts and runs fully offline.
+- **Graceful degradation.** If a required local model is missing, the app fails with a clear message
+  and, where possible, falls back to a deterministic approximation rather than silently producing bad
   output.
 
-This keeps the local-first guarantee intact: even model-backed apps run offline, with cost and
-availability fully under the user's control.
+This keeps the local-first guarantee intact: a deterministic or local-only app runs offline, with
+cost and availability fully under the user's control, and hosted access is opt-in per step.
 
 ### Build & packaging
 
@@ -195,8 +252,40 @@ stay isolated rather than leaking into shared code.
 - **Output isolation.** `dist/` holds build output and is gitignored; the checked-in project stays
   small and reproducible.
 - **Reproducibility.** Dependencies are pinned so a rebuild on the same OS produces an equivalent
-  artifact. Cross-OS builds are out of scope initially — each artifact is built on (or for) its own
-  platform.
+  artifact.
+- **Build can't always run in-session.** When the skill can't run the build itself — a missing
+  toolchain, a credential only the user has, an interactive prompt it can't satisfy — it doesn't go
+  quiet. It hands the user the exact command, the working directory, and where the artifact will
+  land. This is a known branch of authoring, not a failure.
+
+#### Target OS is the host OS
+
+The skill doesn't ask which OS to target — it detects the OS it's running on and builds for that
+one. There is no cross-compilation. This trades convenience for predictability: cross-compilation
+introduces "works on my machine" bugs that are hard to catch and harder to debug from inside a
+generation run. When the user wants the same app on a second OS, they re-run the skill on a machine
+of that OS; it reuses the OS-agnostic `AUTHORING.md` / `APP.md` / `README.md`, re-asks only the
+OS-specific questions, and adds a sibling `<os>/` folder beside the existing one.
+
+### Editing existing apps
+
+Editing is a first-class flow, not a regenerate-from-scratch fallback. When the user comes back with
+a change, the skill reads `AUTHORING.md`, `APP.md`, and the relevant `<os>-specific.md`, modifies the
+affected step, keeps the three anchor files in sync, re-runs validation, and rebuilds. Most edits
+touch a single step. A full regeneration is reserved for changes large enough that a patch would be
+messier than a redo, rewriting the anchor files in place.
+
+This makes editability the test the project layout has to pass: if the skill can't reconstruct enough
+context from the anchor files to make a confident change, the original interview was too shallow.
+Recording intent in `AUTHORING.md` exists precisely so a later edit doesn't have to re-derive it.
+
+### Scheduling
+
+Apps that run on a cadence get their scheduler config generated for them at authoring time, as native
+per-OS configuration written into `resources/` — launchd `.plist` on macOS, Task Scheduler XML on
+Windows, a `.desktop` autostart entry on Linux. The skill owns scheduling so the user doesn't have to
+hand-write cron lines; the OS, not a daemon the app ships, is what triggers the run. The chosen
+cadence is recorded in `APP.md` and the generated config in `<os>-specific.md`.
 
 ### Testing & validation
 
@@ -214,24 +303,66 @@ Because each app does exactly one thing, validation is tractable: the success co
 - **Fixtures over live sources.** Tests run against recorded fixtures (a saved page, a sample file)
   so validation is fast, offline, and stable, independent of whether the live source changed.
 
+## Invariants
+
+A few properties hold for every app the skill produces. An artifact that breaks one of them isn't
+the kind of app this skill is for:
+
+1. **Single responsibility.** One app does one job. Two jobs means two apps.
+2. **Local-first execution.** The app runs without a hosted model unless a specific step has
+   explicitly opted into the hosted tier.
+3. **The user is not the author.** Setup steps, prompts, error messages, and outputs make sense to
+   someone who didn't write the spec.
+4. **Cheapest tier first.** A model call where a regex would do is a bug.
+5. **Editable.** `AUTHORING.md` and `APP.md` carry enough context for the skill to change the app
+   later without starting over.
+
+The skill pushes back during the interview rather than producing something that violates these — if
+a request is really a multi-screen application, a server, or a long-running service, it says so and
+offers to narrow the request to an app-shaped piece.
+
 ## Error handling
 
-- **Authoring failures** (ambiguous request, generation that won't pass validation) surface to the
-  user with a specific reason and a request for clarification — the skill does not ship an app it
-  could not validate.
+The skill expects to hit each of these. Anything not on this list and not handled inline is a bug
+worth investigating.
+
+- **The request isn't app-shaped.** The user describes a multi-screen UI, a server, or a daemon. The
+  skill pushes back, offers to narrow the request, or declines.
+- **Ambiguous request or generation that won't validate.** Surfaces to the user with a specific
+  reason and a request for clarification — the skill does not ship an app it could not validate.
+- **A local model isn't reliable enough for a step.** Authoring-time validation catches this and the
+  step escalates to the hosted tier. The escalation is recorded in `APP.md`; it is not a silent
+  run-time fallback.
+- **A hosted API key is missing at run time.** The app prompts the user and stores the key in the OS
+  keyring. An app with no hosted steps never prompts.
+- **The build can't run in-session.** A missing toolchain, a credential only the user has, or an
+  interactive prompt the skill can't satisfy. The skill hands the user the exact command, working
+  directory, and artifact location instead of going quiet.
 - **Run-time failures** (a source is unreachable, a model is missing, an input is malformed) exit
   with a clear, actionable message rather than a stack trace, and avoid producing partial or
   misleading output.
 
 ## Open questions
 
-- **Scheduling.** Many of these apps want to run on a cadence. Does the skill own scheduling (cron,
-  launchd, Task Scheduler), or only produce the artifact and leave scheduling to the user?
-- **Editing.** When a user wants to change an existing app, do we regenerate from `AUTHORING.md` or
-  edit `main.py` in place?
 - **Sandboxing.** What are the permission boundaries for a generated app, given it runs native code
   on the user's machine?
-- **Model distribution.** How does a user acquire the right local model with the least friction, and
-  who is responsible for keeping it current?
-- **Cross-platform builds.** Is building for an OS other than the host worth supporting, or do we
-  require building on the target platform?
+- **Artifact attestation.** A built artifact should be verifiable against the project it came from.
+  What's the minimum scheme that gives a recipient confidence without turning the build into a
+  research project?
+
+Three earlier open questions are now settled and recorded above: **scheduling** is generated as
+native per-OS config at authoring time (see *Scheduling*); **editing** is a first-class patch flow
+over the anchor files, with full regeneration reserved for large changes (see *Editing existing
+apps*); and **cross-platform builds** are not supported — the target OS is the host OS, and a second
+OS means re-running the skill there (see *Target OS is the host OS*).
+
+## Future work
+
+Out of scope for this design, listed so they aren't re-litigated in review:
+
+- An app marketplace.
+- Automated security scanning of generated apps.
+- Code-signing and notarization by default.
+- A remote update channel.
+- A GUI for the skill itself.
+- Cross-compilation to non-host operating systems.
