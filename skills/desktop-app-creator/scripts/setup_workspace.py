@@ -235,8 +235,8 @@ AUTHORING_MD_STUB = """# {{DISPLAY_NAME}} — authoring notes
 (For each step that looked like it needed a model: the rule you proposed, and whether
 it was taken or why it was dropped in favor of a higher tier.)
 
-## Interface & theme
-Interface style, color theme, icon, data format. (OS-agnostic choices only.)
+## Interaction & theme
+Interaction style (headless/double-click / tray / window / terminal-CLI), color theme, icon, data format. (OS-agnostic choices only.)
 
 ## Decisions & rejected alternatives
 (The forks future-you will want context on.)

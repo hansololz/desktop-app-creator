@@ -47,14 +47,42 @@ OS-specific handful.
 When rebuilding the same app on a new OS, read the common answers back from `AUTHORING.md` +
 `APP.md` and run *only* the OS-specific portion below — don't re-ask the task.
 
+## How to run it
+
+The interview is a sequence, not a form dump. Run it in this order — the order is what makes it
+feel like confirming a plan instead of filling out a spec from scratch:
+
+1. **Understand the task.** Let the user describe what they want in their own words. Don't interrupt
+   with structured questions yet — you're listening for the shape of the job, not filling slots.
+2. **Restate it back, then wait.** One short paragraph of what you heard, and a pause for the user
+   to confirm or correct. A misread task caught here is a sentence to fix; the same misread caught
+   after the build is a redo.
+3. **Look for a deterministic shape before any model.** This is the single most important habit in
+   the whole interview. A user who asks for "AI" is usually describing the *behavior* they want, not
+   the implementation — "categorize my downloads" almost always means "look at the extension and
+   bucket by type," which is regex, not an LLM. Propose the deterministic version; escalate to a
+   local model only when you've genuinely failed to find a rule that fits.
+4. **Ask the app's name first, then the rest in order.** The name (question 1 below) is always the
+   first structured question — it anchors the folder, the docs, and the artifact, so it's worth
+   settling before anything else. Then work through the questions below, skipping any the request
+   already answered.
+5. **Close with the plan readback.** Show the steps, each tagged deterministic / local / hosted, and
+   the app's name, and wait for an explicit confirm before any code is written (the `START OF PLAN`
+   banner and the set-off confirmation prompt are in SKILL.md → "The plan readback" and
+   `references/steps.md`). Don't bury the "please confirm" ask inside a wall of plan text, or the
+   user skims past it and you build the wrong app.
+
 ---
 
 ## Questions, in order
 
 ### 1. App name and display name
 
-Derive both from the task and offer them as a pair — they usually differ only in capitalization,
-so don't make the user treat them as two decisions unless they push back.
+**Ask this first, on every run, unless the request already named the app.** The name anchors the
+project folder, the anchor docs, and the built artifact, so it's the one question always worth
+settling up front — don't let the rest of the interview run with the app still unnamed. Derive both
+from the task and offer them as a pair — they usually differ only in capitalization, so don't make
+the user treat them as two decisions unless they push back.
 
 - **Slug** (kebab-case): drives the folder, `APP.md`'s `name:`, anything filesystem-safe —
   e.g. `receipt-filer`.
@@ -64,20 +92,28 @@ so don't make the user treat them as two decisions unless they push back.
 Phrasing: *"I'll call this `receipt-filer` internally and show it as **Receipt Filer** in windows
 and the built app — good, or want different names?"*
 
-### 2. Interface style (single-select for headless vs. windowed; tray can pair)
+### 2. Interaction style (how the user wants to interact with the app)
 
-Recommend whichever the task implies — a digest that runs every morning wants headless; a thing
-the user pokes at wants a window.
+Phrase the question the way the user thinks about it: *"How do you want to interact with this — just
+double-click and let it run, a window you click around in, or from the terminal?"* That's the
+question that decides the shape of everything after it. Recommend whichever the task implies — a
+digest that runs every morning wants double-click/headless; a thing the user pokes at wants a window;
+something a power user will script or cron wants a CLI.
 
-- **Headless / scheduled (recommended for digests, monitors, filers)** — no window; runs and
-  exits. Smallest, simplest, nothing to look at.
-- **Menu-bar / tray** — lives in the menu bar or system tray; pick when the user wants it always
-  at hand but not a full window. Can pair with either of the others.
+- **Just double-click / headless / scheduled (recommended for digests, monitors, filers)** — no
+  window; runs and exits. Smallest, simplest, nothing to look at.
+- **Menu-bar / tray** — lives in the menu bar or system tray; pick when the user wants it always at
+  hand but not a full window. Can pair with either of the others.
 - **Simple window** — pick when the user pokes at it, reads output in it, or changes settings.
+- **Terminal / CLI** — runs from a shell, driven by flags; pick when it'll be wired into cron,
+  another script, or a power user's workflow.
+- **User-provided** — none of these fit; let them describe how they want to launch it.
 
-Headless and windowed are mutually exclusive; a tray item can pair with either. **If they pick a
-windowed interface, ask the UI-framework and color-theme questions (5 and 6) and the UI-description
-question (10); if not, skip those.**
+Double-click/headless and windowed are mutually exclusive — an app either pops a window or it
+doesn't. But a tray item *or* a CLI can pair with either: a windowed app can still accept
+command-line flags, and a headless app can take CLI args too. **If they pick a windowed interface,
+ask the UI-framework and color-theme questions (5 and 6) and the UI-description question (10); for a
+headless or CLI-only app, skip those.**
 
 ### 3. Icon
 
@@ -111,14 +147,20 @@ lands in `APP.md`.
 
 ### 5. UI framework (windowed only)
 
-The first option is **always OS-native, and you recommend it** — smallest binary, lightest at run
-time, closest match for the look the theme is calibrated to. Detect what else the host supports
-(`shutil.which("npm")` for Electron, `shutil.which("cargo")` for Tauri) and offer cross-platform
-options *only when their toolchain is present*. Put a rough installed size in each label so the
-trade-off is visible. **Don't silently default to Tkinter, and don't lead with Electron just
-because npm happens to be installed.** The pick lands in `<os>-specific.md`.
+The first option is **always the host OS's native framework, and you recommend it** — smallest
+binary, lightest at run time, closest match for the look the theme is calibrated to. On macOS that's
+**native Swift (SwiftUI)**, and it's the top recommendation for a Mac GUI. **Name only the host's
+native toolkit.** A run only ever targets the OS it's running on, so listing another platform's
+framework is noise — and on macOS specifically, never put "Windows" or WinUI in front of the user:
+they're building a Mac app, and a Windows framework in the option list reads as though the skill is
+about to build the wrong thing. Detect what else the host supports (`shutil.which("npm")` for
+Electron, `shutil.which("cargo")` for Tauri) and offer cross-platform options *only when their
+toolchain is present*. Put a rough installed size in each label so the trade-off is visible.
+**Don't silently default to Tkinter, and don't lead with Electron just because npm happens to be
+installed.** The pick lands in `<os>-specific.md`.
 
-- **OS-native (recommended)** — SwiftUI (macOS), WinUI (Windows), GTK/Qt (Linux). ≈5–15 MB.
+- **Native (recommended)** — on macOS, **native Swift (SwiftUI)**; on Windows, WinUI; on Linux,
+  GTK/Qt. ≈5–15 MB. List only the one for the host you're on.
 - **Electron + Tailwind** — ≈80–150 MB, *offer only if npm present*. Pick when the UI is genuinely
   web-shaped and the user wants rich HTML layout.
 - **Tauri** — ≈5–20 MB, *offer only if Rust/cargo present*. Web UI, native-light binary.
@@ -128,9 +170,10 @@ because npm happens to be installed.** The pick lands in `<os>-specific.md`.
 ### 6. Color theme (windowed only)
 
 - **Default theme (recommended)** — the skill's opinionated branded style, **dark-first for now**:
-  a warm near-black canvas, soft borders, a single accent, a unified title bar that extends into a
-  continuous header band, and a thin footer attribution strip. Selecting it applies the *whole
-  package*, defined in `references/default-theme.md`. The user never has to specify a design.
+  a warm dark canvas calibrated to Claude's desktop look, soft borders, a single coral accent, light
+  off-white text, a unified title bar that extends into a continuous header band, and a thin footer
+  attribution strip. Selecting it applies the *whole package*, defined in
+  `references/default-theme.md`. The user never has to specify a design.
 - **Light** — plainer light alternative for a user who wants to override the default.
 - **Dark** — plain dark, without the full branded treatment.
 - **Minimal** — stripped-back, lowest-chrome look.

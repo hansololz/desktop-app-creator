@@ -80,6 +80,16 @@ user anything else.
 
 ### The interview
 
+The interview runs as a **sequence, not a form dump**, and the order is doing work. First, let the user
+describe the task in their own words — don't interrupt with structured questions yet. Then restate it back in a
+sentence or two and wait for a confirm; a misread task caught here is one sentence to fix, the same misread caught
+after the build is a redo. Only with the task pinned do you reach for the structured questions, and the first of
+them is always the **app's name** (see below) — it anchors the folder, the docs, and everything downstream, so it's
+the question always worth asking up front. Run the rest in order, skipping any the request already answered, look
+for a deterministic shape before any model along the way (the high-leverage habit called out below), and close with
+the plan readback. Fixing the order is the same economics the whole stage runs on: the cheapest place to catch a
+wrong assumption is the earliest one. `references/interview.md` → "How to run it" has the step-by-step.
+
 The single most important habit, and the one easiest to skip under time pressure, is this: **propose a concrete default
 for every question.** Read what the user already told you, infer the pick you'd make, and present it as the thing to
 confirm. "JSON in your home directory sounds right for an app that just keeps a last-seen timestamp — want that, or
@@ -123,7 +133,7 @@ Everything the interview surfaces gets written down as you go, into one of two p
 
 - **`AUTHORING.md`** (project root) — anything true of the app regardless of OS: the task, the restatement, the
   deterministic shapes you proposed and why they were taken or dropped, the step/tier plan, edge cases, partial-failure
-  behavior, the data *format*, interface style, color theme, hosted-model picks, and the decisions-and-rejected-
+  behavior, the data *format*, interaction style, color theme, hosted-model picks, and the decisions-and-rejected-
   alternatives that future-you will want during an edit.
 - **`<os>/<os>-specific.md`** — anything tied to the OS you're authoring on: the UI framework picked here, the data
   *location* (`~/.<app>/` vs `%LOCALAPPDATA%\<app>\`), scheduler glue, the local-model runtime, the keyring backend,
@@ -141,14 +151,21 @@ every option (per the recommend-and-exemplify habit above). Where two options ar
 single-select; otherwise let the user pick more than one. `references/interview.md` in the skill has the full phrasing
 and the per-option rationales for each.
 
-- **App name and display name.** A kebab-case slug (drives the folder, `APP.md`'s `name:`, anything that has to be
+- **App name and display name.** **Ask this first**, and ask it on every run unless the request already named the app —
+  the name anchors the project folder, the anchor docs, and the built artifact, so it's the one decision worth settling
+  before anything else. A kebab-case slug (drives the folder, `APP.md`'s `name:`, anything that has to be
   filesystem-safe) and a human-readable display name (window titles, headings, and the artifact filename —
   `Receipt Filer.app`, not `receipt-filer`). Derive both from the task and offer them as a pair; they usually differ
   only in capitalization, so don't make the user think of them as two decisions unless they push back.
-- **Interface style.** Headless/scheduled (no window), menu-bar/tray, or a simple window — recommend whichever the task
-  implies (a digest that runs every morning wants headless; a thing the user pokes at wants a window). Headless and
-  windowed are mutually exclusive; a tray item can pair with either. If they pick a windowed interface, the UI-framework
-  and color-theme questions follow; if not, skip those.
+- **Interaction style.** Lead by asking *how the user wants to interact with the app* — that's the framing the user
+  thinks in, and it's the question that decides the shape of everything after it. Offer the full range: just
+  double-click it (**headless / scheduled** — runs and exits, no window), a **menu-bar / tray** item, a **simple
+  window**, or from the **terminal** (a **CLI** driven by flags), plus a user-provided escape hatch. Recommend whichever
+  the task implies — a digest that fires every morning wants headless/double-click; a thing the user pokes at wants a
+  window; something a power user will script or cron wants a CLI. Double-click/headless and windowed are mutually
+  exclusive (an app either pops a window or it doesn't), but a tray item or a CLI can pair with either — a windowed app
+  can still accept command-line flags. If they pick a windowed interface, the UI-framework, color-theme, and
+  UI-description questions follow; for a headless or CLI-only app, skip those.
 - **Icon.** Default desktop-app-creator icon (recommended, offered first) or user-provided. The default is a real,
   bundled asset that ships with the skill (`assets/icon.{png,icns,ico,svg}`), and the scaffold copies it into every new
   app's `resources/` automatically — so an app *always* has the default icon wired into its build unless the user
@@ -160,17 +177,22 @@ and the per-option rationales for each.
   system startup. A scheduled or startup app gets native scheduler config generated for it — a launchd `.plist` on
   macOS, a Task Scheduler XML on Windows, a `.desktop` autostart entry on Linux — written into `resources/` with a short
   how-to-install note (`design.md` → "Scheduling"). The OS, not a daemon the app ships, is what triggers the run.
-- **UI framework** (windowed only). The first option is always the **OS-native** framework and you recommend it —
-  smallest binary, lightest at run time, closest match for the look the theme is calibrated to. Detect what else the
-  host supports (`shutil.which("npm")` for Electron, `shutil.which("cargo")` for Tauri) and offer the cross-platform
-  options *only when their toolchain is present*, each with a rough installed size in the label so the trade-off is
-  visible: native (≈5–15 MB), Electron + Tailwind (≈80–150 MB, npm only), Tauri (≈5–20 MB, Rust only), PySide6
-  (≈40–80 MB), Tkinter (≈10–30 MB) as the always-available fallback. Don't silently default to Tkinter, and don't lead
-  with Electron just because npm happens to be installed. The pick lands in `<os>-specific.md`.
+- **UI framework** (windowed only). The first option is always the **host OS's native** framework and you recommend
+  it — smallest binary, lightest at run time, closest match for the look the theme is calibrated to. On macOS that's
+  **native Swift (SwiftUI)** and it's the top recommendation for a Mac GUI; on Windows it's WinUI; on Linux, GTK/Qt.
+  Name only the *host's* native toolkit — a run only ever targets the OS it's on (see *Platform support*), so listing
+  another platform's framework is noise. On macOS in particular, never surface "Windows" or WinUI to the user: they're
+  building a Mac app, and a Windows framework in the list reads as though the skill is about to build the wrong thing.
+  Detect what else the host supports (`shutil.which("npm")` for Electron, `shutil.which("cargo")` for Tauri) and offer
+  the cross-platform options *only when their toolchain is present*, each with a rough installed size in the label so the
+  trade-off is visible: native (≈5–15 MB), Electron + Tailwind (≈80–150 MB, npm only), Tauri (≈5–20 MB, Rust only),
+  PySide6 (≈40–80 MB), Tkinter (≈10–30 MB) as the always-available fallback. Don't silently default to Tkinter, and
+  don't lead with Electron just because npm happens to be installed. The pick lands in `<os>-specific.md`.
 - **Color theme** (windowed only). Default theme (recommended), light, dark, or minimal — the four options
   `design.md` → "Opinionated defaults & the interview" calls out. The default is the skill's opinionated branded style,
-  and **for now that style is dark** — defined in full in `references/default-theme.md` (a warm near-black canvas, soft
-  borders, a single accent, a unified title bar that extends into a continuous "header band" with the header/table-header
+  and **for now that style is dark** — defined in full in `references/default-theme.md` (a warm dark canvas calibrated
+  to Claude's desktop look, soft borders, a single coral accent, light off-white text set explicitly so it never inherits
+  the OS light-mode default, a unified title bar that extends into a continuous "header band" with the header/table-header
   row, and a thin footer attribution strip); selecting it applies the whole package, not just a background color, while
   "light" / "dark" / "minimal" are the plainer alternatives for a user who wants to override it. (An earlier draft was
   light-first; the skill is dark-first for now, and this is the one knob to flip if that's revisited.) The point is that
@@ -343,8 +365,12 @@ plaintext on disk. Fixing the regex while you're looking at it is cheaper than c
 `references/packaging.md` → "Security review" has the checklist.
 
 **The windowed default is a real theme, not bare Tkinter.** If the app has a window, apply `references/default-theme.md`:
-a clean dark palette (dark-first for now), rounded corners on every container and control, a single system font, and — the rule that breaks
-most often — **a title bar painted the same color as the body**, never the OS-default chrome strip. Take it one step
+a clean dark palette calibrated to Claude's desktop look (dark-first for now), rounded corners on every container and
+control, a single system font, and — two rules that break most often — **a title bar painted the same color as the body**
+(never the OS-default chrome strip), and **every text element set explicitly to the theme's light `text` token**. The
+second matters because controls that don't set their own foreground inherit the OS default, which is black on a
+light-mode host — so the app renders dark-background with black text and "still looks like the light theme." Set
+foreground on every label, input, table cell, and header, not just the window background. Take it one step
 further where the app has a header row: paint the title bar, header, and table-header as one continuous "header band" so
 they read as a single piece of chrome, and for menu-bar apps reapply the window chrome on every reopen (the
 activation-policy toggle drops it otherwise). "Modern desktop app" is the bar users expect now; an app that doesn't clear
@@ -353,9 +379,11 @@ it reads as broken even when it works. Also decode HTML entities at the point ou
 `Dave&#039;s &quot;news&quot;`. Deviate from the theme only when the user asked for something else and you recorded it in
 `AUTHORING.md`.
 
-**Framework order:** native first and recommended (SwiftUI on macOS, WinUI on Windows, GTK/Qt on Linux), then the
-cross-platform options *the host can actually build*, each with its size estimate, as covered in the interview.
-Cross-compilation is out — the skill builds for the current OS, full stop.
+**Framework order:** native first and recommended — on macOS that's **native Swift (SwiftUI)**, on Windows WinUI, on
+Linux GTK/Qt — then the cross-platform options *the host can actually build*, each with its size estimate, as covered
+in the interview. Name only the host's native toolkit; don't enumerate other platforms' frameworks (on a Mac,
+surfacing "Windows"/WinUI makes the user think they're building a Windows app). Cross-compilation is out — the skill
+builds for the current OS, full stop.
 
 **Generate the tests too.** Alongside `main.py`, write tests derived from the input/output contract in `APP.md` —
 exact-match assertions for deterministic steps, looser schema/shape/sanity checks for model-backed steps, run against

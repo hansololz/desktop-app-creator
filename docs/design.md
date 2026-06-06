@@ -137,8 +137,12 @@ These choices are made through a short **interview**. The skill presents each de
 list of options with one marked *recommended* and pre-selected, so the user can skim, accept, or
 swap. Typical questions:
 
-- **Interface.** Headless/scheduled · menu-bar/tray · simple window *(recommended depends on the
-  task)*.
+- **Interaction style.** How the user drives the app — asked the way the user thinks about it ("how do you
+  want to interact with this?"): just double-click it (headless/scheduled, no window) · menu-bar/tray · a
+  window · from the terminal (a CLI driven by flags) *(recommended depends on the task)*. A CLI and a window
+  are different *interaction* surfaces, not different stacks, which is why this is one interview choice rather
+  than a stack decision; the native-vs-cross-platform stack is settled separately only when the app has a
+  window.
 - **Theme.** Default theme *(recommended)* · light · dark · minimal.
 - **Run model.** On a schedule *(recommended for digests/monitors)* · on demand. A scheduled app
   gets native scheduler config generated for it (see *Scheduling*).

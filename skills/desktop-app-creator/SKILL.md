@@ -1,17 +1,12 @@
 ---
 name: desktop-app-creator
 description: >-
-  Turn a plain-language description of a small, repetitive desktop task into a self-contained,
-  locally-runnable native app — generated, built, and validated on the user's own machine. Use
-  this whenever someone wants to automate a recurring desktop chore and own the result: "every
-  morning pull a digest of these sites", "watch this page and tell me when the price drops",
-  "rename and file my receipts", "make me a little menu-bar tool that does X", "build me a tiny
-  app/script/utility that runs on a schedule". Trigger it even when the user doesn't say "app" —
-  if they describe a small one-job automation they want to keep and re-run offline (a monitor, a
-  digest, a watcher, a filer, a scraper, a reminder), this is the skill. Also use it to EDIT an
-  app it built before ("make the digest shorter", "add a Slack ping", "switch to OpenAI", "now
-  build it for my Mac too"). Do not use it for multi-screen applications, servers, long-running
-  daemons, multi-user software, or general coding tasks that aren't a single-purpose local app.
+  Turn a plain-language description of a small, repetitive desktop task into a self-contained
+  native app, built and validated on the user's own machine. Use whenever someone wants to
+  automate a recurring desktop chore and own the result — a digest, monitor, watcher, filer,
+  scraper, or reminder — even when they don't say "app". Also use it to EDIT an app it built
+  before. Don't use for multi-screen apps, servers, daemons, multi-user software, or general
+  coding.
 ---
 
 # desktop-app-creator
@@ -129,9 +124,13 @@ enough that you — or a future edit — could build the app from them without a
 
 ### The interview
 
-The full question list, exact phrasing, and per-option rationales live in
-**`references/interview.md`** — read it before you start interviewing. The habits that make or
-break the interview:
+The full question list, exact phrasing, per-option rationales, and the **step-by-step "How to run
+it" flow** live in **`references/interview.md`** — read it before you start interviewing. Run the
+interview as a *sequence, not a form dump*: let the user describe the task in their own words,
+restate it back and wait for a confirm, look for a deterministic shape before reaching for any
+model, then ask the structured questions — **the app's name first**, since it anchors the folder,
+the docs, and the artifact and is worth settling before anything else — and close with the plan
+readback. The habits that make or break the interview:
 
 - **Propose a concrete default for every question.** Read what the user already told you, infer
   the pick you'd make, and present it as the thing to confirm. The user's job should be reacting to
@@ -237,9 +236,11 @@ chrome on every reopen. Decode HTML entities where outside text enters (`html.un
 Python, `textContent` not `innerHTML` in a webview). Deviate only when the user asked for something
 else and you recorded it in `AUTHORING.md`.
 
-**Framework order:** native first and recommended (SwiftUI on macOS, WinUI on Windows, GTK/Qt on
-Linux), then the cross-platform options *the host can actually build*, each with its size estimate.
-Cross-compilation is out.
+**Framework order:** native first and recommended — on macOS that's **native Swift (SwiftUI)**, on
+Windows WinUI, on Linux GTK/Qt — then the cross-platform options *the host can actually build*, each
+with its size estimate. Name only the host's native toolkit; don't enumerate other platforms'
+frameworks (on a Mac, surfacing "Windows"/WinUI makes the user think they're building a Windows
+app). Cross-compilation is out.
 
 **Generate the tests too.** Alongside `main.py`, write tests derived from the input/output
 contract in `APP.md` — exact-match assertions for deterministic steps, looser schema/shape/sanity

@@ -12,23 +12,40 @@ user asked for something else and you recorded it in `AUTHORING.md`.
 
 ## The palette
 
-A warm near-black canvas, soft borders, a single accent. Warm (a hint of brown/red in the black),
-not the cold blue-black of default OS dark mode — that warmth is what makes it read as designed.
+Calibrated to **Claude's desktop look**: a warm dark-grey canvas, soft borders, and Claude's single
+coral accent. Warm (a hint of brown in the grey), not the cold blue-black of default OS dark mode —
+that warmth is what makes it read as designed and as recognizably Claude.
 
 | Token              | Value       | Use                                                        |
 |--------------------|-------------|------------------------------------------------------------|
-| `canvas`           | `#1A1714`   | Window body background (warm near-black)                   |
-| `header-band`      | `#211D19`   | Title bar + header + table-header, one continuous shade    |
-| `surface`          | `#262220`   | Cards, rows, input fields raised off the canvas            |
-| `surface-hover`    | `#2F2A27`   | Hover/active state on interactive surfaces                 |
-| `border`           | `#3A3531`   | Soft 1px borders — visible but never harsh                 |
-| `text`             | `#EDE8E2`   | Primary text (warm off-white, never pure `#FFF`)           |
-| `text-muted`       | `#A39B92`   | Secondary text, labels, timestamps                         |
-| `accent`           | `#E8975A`   | The single accent — warm amber; buttons, links, focus      |
-| `accent-text`      | `#1A1714`   | Text on top of the accent                                  |
-| `footer`           | `#8A8077`   | Footer attribution strip text                              |
+| `canvas`           | `#1F1E1D`   | Window body background (warm near-black, Claude's deepest) |
+| `header-band`      | `#262624`   | Title bar + header + table-header, one continuous shade — Claude's signature dark grey |
+| `surface`          | `#30302E`   | Cards, rows, input fields raised off the canvas            |
+| `surface-hover`    | `#3A3A37`   | Hover/active state on interactive surfaces                 |
+| `border`           | `#423F3B`   | Soft 1px borders — visible but never harsh                 |
+| `text`             | `#F5F4EE`   | Primary text (warm off-white, Claude's "Pampas", never pure `#FFF`) |
+| `text-muted`       | `#B7B3A9`   | Secondary text, labels, timestamps                         |
+| `accent`           | `#D97757`   | The single accent — Claude's coral; buttons, links, focus  |
+| `accent-text`      | `#1F1E1D`   | Text on top of the accent                                  |
+| `footer`           | `#8A8579`   | Footer attribution strip text                              |
 
-One accent only. Resist a second highlight color — the coherence comes from restraint.
+One accent only — Claude's coral. Resist a second highlight color; the coherence comes from restraint.
+
+## Text color — the bug that makes a dark app "still look light"
+
+**Set `text` (or `text-muted`) as the explicit foreground on every text-bearing widget** — labels,
+inputs, table cells, list rows, headers, buttons. Painting only the window/background dark is not
+enough: a control that doesn't set its own foreground falls back to the OS default, which is **black
+on a light-mode host**. The result is a dark window full of black, unreadable text that looks like
+the light theme leaked through. This is the single most common dark-mode failure, so set foreground
+everywhere, not just background.
+
+- **Tkinter/PySide6:** set `fg`/`foreground` (and `insertbackground` for text-entry carets) on every
+  widget and in the `ttk.Style`/Qt stylesheet — don't rely on widget defaults.
+- **Web (Electron/Tauri):** set `color` on `body` and don't let any element reset it to a UA default;
+  also set the `<meta name="color-scheme" content="dark">` so form controls render dark.
+- **Native (AppKit/WinUI):** drive the appearance from the dark palette explicitly rather than
+  letting the control inherit the system effective appearance.
 
 ## Typography
 
@@ -91,7 +108,8 @@ right at the boundary once.
 - [ ] Title bar painted `header-band`, not the OS default chrome strip.
 - [ ] Title bar + header + table-header read as one continuous band.
 - [ ] Rounded corners on containers and controls.
-- [ ] One system font, one accent color.
+- [ ] `text` foreground set explicitly on every label, input, cell, and header — no black-on-dark.
+- [ ] One system font, one accent color (Claude coral).
 - [ ] Footer attribution strip present and quiet.
 - [ ] Outside text run through `html.unescape()` / `textContent`.
 - [ ] Menu-bar app: chrome reapplied on every reopen.

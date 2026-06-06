@@ -22,10 +22,11 @@ was taken or — if dropped for a higher tier — why. "A model call where a reg
 (The signed-off plan: each step, its tier, and the named model for local/hosted steps. Mirror
 APP.md; this is the narrative version with the reasoning.)
 
-## Interface & theme
+## Interaction & theme
 
-Interface style (headless / tray / window), color theme, icon, data **format**. (OS-agnostic
-choices only — the data *location* and UI framework live in <os>-specific.md.)
+Interaction style (headless/double-click / tray / window / terminal-CLI), color theme, icon, data
+**format**. (OS-agnostic choices only — the data *location* and UI framework live in
+<os>-specific.md.)
 
 ## Hosted-model picks
 
