@@ -1,0 +1,44 @@
+# {{DISPLAY_NAME}} — authoring notes
+
+> Common to every OS. Append over time; never rewrite history. This file records intent so a
+> later edit doesn't have to re-derive it — it's the reason editing stays cheap. Anything that
+> would change if the app ran on a different OS belongs in <os>-specific.md, not here.
+
+## Original request
+
+(Verbatim what the user asked for, on {{DATE}}.)
+
+## Restatement
+
+(Your one-paragraph restatement that the user confirmed.)
+
+## Deterministic shapes considered
+
+(For each step that first looked like it needed a model: the rule you proposed, and whether it
+was taken or — if dropped for a higher tier — why. "A model call where a regex would do is a bug.")
+
+## Step / tier plan
+
+(The signed-off plan: each step, its tier, and the named model for local/hosted steps. Mirror
+APP.md; this is the narrative version with the reasoning.)
+
+## Interface & theme
+
+Interface style (headless / tray / window), color theme, icon, data **format**. (OS-agnostic
+choices only — the data *location* and UI framework live in <os>-specific.md.)
+
+## Hosted-model picks
+
+(Provider + tier + the verified model string, and why that rung — balanced by default.)
+
+## Edge-case decisions
+
+Partial failure, empty results, first-vs-nth run, idempotency, output collision.
+
+## Decisions & rejected alternatives
+
+(The forks future-you will want context on during an edit.)
+
+## Edit log
+
+- {{DATE}} — initial authoring.

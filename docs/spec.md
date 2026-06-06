@@ -276,6 +276,32 @@ there's no OS flag:
 python scripts/setup_workspace.py --name <app-slug> --display-name "<Display Name>" --root <path-to-root>
 ```
 
+The scaffold script is the one piece of tooling *every* authoring run leans on, so it has to be the
+least likely thing to fail. It depends on **nothing outside the Python standard library** and is
+written to run on whatever Python 3 the host already has — no `pip install`, no version-gated syntax,
+no third-party import that might be missing. This is the same availability logic the apps it
+generates follow (`design.md` → "Background": a tool that needs a dependency the user doesn't have is
+a tool that doesn't run), applied to the skill's own tooling. It also **degrades rather than breaks**:
+if its bundled templates under `assets/` are absent, it falls back to built-in stubs and still emits a
+complete tree, and a non-fatal step (e.g. setting the build script's executable bit on a filesystem
+that won't allow it) is skipped with a warning rather than aborting the scaffold. Invoke it with a
+Python 3 interpreter — `python3` on macOS/Linux, `python` on Windows — and if it's somehow run on an
+unsupported interpreter it should say so plainly rather than fail with a traceback. The same
+constraint holds for any future script the skill ships: stdlib-only and portable, so running the
+skill never stalls on a dependency the user's machine doesn't have.
+
+The scaffold script also **validates its own inputs before they touch the filesystem**, because it
+turns those inputs into paths and into generated build scripts — exactly the "sanitize anything that
+lands in a path or a shell" rule Stage 2 → "Security as you go" and `packaging.md` → "Security
+review" apply to generated apps, turned back on the skill's own tooling. `--name` must be a safe
+kebab-case slug (lowercase alphanumerics and hyphens, no separators, no `..`, not absolute) so it
+can't traverse out of `workspaces/` or collapse the join to an absolute location, and the resolved
+project directory is re-checked to confirm it still sits under `workspaces/`. `--display-name` is
+restricted to characters safe to interpolate into the generated `build.{sh,bat}` (no shell or batch
+metacharacters), so a name can't smuggle a command into a script the user later runs. A rejected
+input fails fast with a message that says what's allowed, rather than silently writing somewhere it
+shouldn't.
+
 That produces `root/workspaces/<app-name>/` with the common spec files at the root and everything OS-specific one level
 down, so a future rebuild for a different OS slots in cleanly alongside:
 

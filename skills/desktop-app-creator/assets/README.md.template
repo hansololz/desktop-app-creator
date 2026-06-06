@@ -1,0 +1,47 @@
+# {{DISPLAY_NAME}}
+
+<!--
+The front-door doc. Short on purpose — distinct from APP.md (the full contract) and
+AUTHORING.md (the rationale). Replace this comment and the placeholders below.
+-->
+
+One or two sentences describing what {{DISPLAY_NAME}} does.
+
+## Features
+
+<!-- Ordered most-important-first. -->
+- Feature one.
+- Feature two.
+
+## Build & run
+
+<!--
+Give the build AND run commands for every OS folder that exists. Example for macOS;
+add/replace per the OS folders present in this project.
+-->
+
+**macOS**
+
+```bash
+cd macos
+./build.sh                       # produces dist/{{DISPLAY_NAME}}.app
+open "dist/{{DISPLAY_NAME}}.app" # run it
+```
+
+**Windows**
+
+```bat
+cd windows
+build.bat                        REM produces dist\{{DISPLAY_NAME}}.exe
+"dist\{{DISPLAY_NAME}}.exe"      REM run it
+```
+
+**Linux**
+
+```bash
+cd linux
+./build.sh                       # produces dist/{{DISPLAY_NAME}}
+./dist/{{DISPLAY_NAME}}          # run it
+```
+
+<!-- If the app runs on a schedule, point to the scheduler config in resources/ and its install command. -->

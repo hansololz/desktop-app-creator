@@ -1,0 +1,57 @@
+---
+name: {{SLUG}}
+description: One-sentence description of what {{DISPLAY_NAME}} does.
+---
+
+# {{DISPLAY_NAME}} — app contract
+
+> APP.md is the behavioral contract and the test spec. Keep the frontmatter above — it
+> makes the file readable to a later edit and to anyone auditing the app. Fill every
+> section; the validate stage builds and checks the app against this file.
+
+## What it does
+
+One paragraph: the single job this app performs. (Single responsibility — one app, one job.)
+
+## Inputs
+
+What the app reads: URLs, files, a schedule trigger, CLI args, settings.
+
+## Outputs
+
+What the app produces, in what format, and where it writes it.
+
+## Side effects
+
+Files written or moved, notifications sent, state stored, network calls made.
+
+## Step plan (tiered)
+
+| # | Step | Tier (deterministic / local / hosted) | Model (if local/hosted) |
+|---|------|---------------------------------------|-------------------------|
+| 1 |      | deterministic                         | —                       |
+| 2 |      | local                                 | e.g. ollama/<model>     |
+| 3 |      | hosted                                | e.g. anthropic/<model>  |
+
+- Tier is pinned here at authoring time; the run-time app does not promote a step.
+- A hosted step records `<provider>/<model>` with a **verified current** identifier.
+- A declared input-shape fallback (e.g. PDF text → OCR) names **both** paths here, and is
+  the only exception to "one tier per step".
+
+## Success conditions (the test spec)
+
+- Bullet the conditions that mean the app worked. These become the generated tests:
+  exact-match for deterministic steps, schema/shape/sanity + golden examples for
+  model-backed steps, run against recorded fixtures.
+
+## Run-time edge cases
+
+- **Partial failure:** (one source down — log and continue, or fail?)
+- **Empty results:** (nothing new — empty file, skip, or "nothing today"?)
+- **First run vs. nth run:** (initialize/baseline — how does it know?)
+- **Idempotency:** (run twice — duplicate, or detect "already done"?)
+- **Output collision:** (today's file exists — overwrite, append, suffix, or fail?)
+
+## Schedule
+
+(Cadence if scheduled — the OS triggers it; generated config path is in <os>-specific.md.)
