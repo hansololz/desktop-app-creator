@@ -1,6 +1,6 @@
 # desktop-app-creator
 
-A Claude skill that turns a plain-language description of a small, repetitive desktop task into a
+An agent skill that turns a plain-language description of a small, repetitive desktop task into a
 self-contained native app — generated, built, and validated on the user's own machine.
 
 ## The problem it solves
@@ -42,7 +42,7 @@ general coding tasks that aren't a single-purpose local app.
 
 ## How to use it
 
-The skill lives in `skills/desktop-app-creator/`. Install it into a Claude environment that supports
+The skill lives in `skills/desktop-app-creator/`. Install it into a agent work environment that supports
 skills (the Claude desktop app / Cowork, or Claude Code), then just describe the task in plain
 language — e.g. "every morning pull a digest of these three sites" — and the skill runs the
 authoring flow: a short interview to sharpen the task, a per-step plan you sign off on, code

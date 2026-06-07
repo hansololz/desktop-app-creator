@@ -147,7 +147,11 @@ the interview:
   recommended pick hands the user back the work they came to offload. This holds for **every set of
   suggestions you put in front of the user**, not just interview questions — framework and model
   lists, alternatives floated at the plan readback, options proposed while editing — always try your
-  best to lead with a recommendation at the top.
+  best to lead with a recommendation at the top. The one exception is a binary confirm-to-proceed
+  sign-off (the task restatement, the plan readback, the build offer, an edit confirmation): list
+  **Confirm** first but leave it *unmarked* — there's no field of options to rank, so a `(recommended)`
+  stamp there only nudges the user past the review the checkpoint exists to force and undercuts keeping
+  the alter branch exactly as prominent.
 - **Keep the list short — five at most.** If a question has more candidates, show only the handful
   worth considering for *this* app and fold the rest into one user-provided escape hatch.
 - **If the task seems to need a model, look for a deterministic shape first.** "Categorize my
@@ -225,9 +229,11 @@ App: Manga Watcher
 ```
 
 …and at the bottom, **don't ask the user to type `confirm` — present the two choices as a selectable
-question** (the AskUserQuestion tool), recommend-first:
+question** (the AskUserQuestion tool). Confirm is listed first but carries **no `(recommended)` marker** —
+this is the confirm-to-proceed exception to the recommend-first rule above; its leading spot is signal
+enough, and marking it would lean on the user past the review the readback exists to prompt:
 
-- **Confirm — build this plan as shown** *(recommended, listed first)* — proceed to generate, build,
+- **Confirm — build this plan as shown** — proceed to generate, build,
   and validate the app exactly as laid out above.
 - **Alter the plan** — change a step's tier, the app's name, or the approach; ask what to change,
   revise, and read the plan back the same way.
@@ -268,11 +274,17 @@ needs; source secrets from the keyring or env, never plaintext on disk. The full
 cheaper than catching it in the final pass.
 
 **The windowed default is a real theme, not bare Tkinter.** If the app has a window, apply
-`references/default-theme.md`: dark-first palette, rounded corners on every container and control,
-a single system font, and — the rule that breaks most often — **a title bar painted the same color
-as the body**, never the OS-default chrome strip. Where the app has a header row, paint title bar,
-header, and table-header as one continuous **header band**; for menu-bar apps reapply window
-chrome on every reopen. Decode HTML entities where outside text enters (`html.unescape()` in
+`references/default-theme.md`: light-first palette (framework-agnostic tokens) with Tailwind-style
+corner radius, components, and a soft elevation shadow, a single system font, and — the rule that
+breaks most often — **a title bar painted the same color as the body**, never the OS-default chrome
+strip. Set both background and `text` foreground explicitly and pin the window to a light appearance,
+so a dark-mode host can't bleed through and leave dark patches. Where the app has a header row, paint
+title bar, header, and table-header as one continuous **header band**; for menu-bar apps reapply
+window chrome on every reopen. **Popup panels (settings, pickers, dropdowns, popovers) light-dismiss
+on an outside click and on Escape** — prefer the framework's built-in popover/flyout so the user is
+never trapped in a panel with no close button. **Fill the window: body, table, and footer stretch to
+the window's edges and stay filled on resize** — one region (usually the table/list) absorbs the slack
+while the rest stays fixed-height, so there's no dead canvas down the side or along the bottom. Decode HTML entities where outside text enters (`html.unescape()` in
 Python, `textContent` not `innerHTML` in a webview). Deviate only when the user asked for something
 else and you recorded it in `AUTHORING.md`.
 
@@ -368,8 +380,9 @@ Read these as the stage that needs them comes up — they hold the detail SKILL.
   rationales; the two-file capture split; the easy-to-forget edge-case questions.
 - **`references/steps.md`** — worked step-plan examples showing how tasks decompose into
   deterministic / local / hosted steps, and how to resist over-reaching for a model.
-- **`references/default-theme.md`** — the dark-first opinionated theme: palette, typography, the
-  header band, the footer attribution strip, and the rules that break most often.
+- **`references/default-theme.md`** — the light-first opinionated theme (framework-agnostic tokens,
+  Tailwind-style shape, Claude palette): palette, typography, the header band, the footer
+  attribution strip, and the rules that break most often.
 - **`references/packaging.md`** — per-OS build details, single-binary packaging, the security
   review checklist, scheduling glue, and the can't-build-in-session handoff format.
 - **`references/editing.md`** — the editing flow in full, for both same-OS changes and add-OS

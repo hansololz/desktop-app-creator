@@ -135,7 +135,10 @@ The defaults cover both *technology* and *theme*:
   the stack is what makes generation and validation dependable; the skill is good at a few
   technologies rather than mediocre at many.
 - **Theme.** A consistent default visual style (layout, typography, color, iconography) so apps
-  look coherent without the user having to specify design. The user can override it, but never has
+  look coherent without the user having to specify design. The current default is a **light** theme
+  calibrated to Claude's desktop look and Tailwind's shape conventions, defined as framework-agnostic
+  tokens so the same look lands on any stack (see *Opinionated defaults & the interview* and
+  `references/default-theme.md`). The user can override it, but never has
   to. Iconography is part of this: the skill ships a real default icon and the scaffold wires it into
   every app it generates, so an app looks finished — and its build's `--icon` flag resolves — without
   the user ever producing art. A user who has their own icon overrides the default; one who doesn't
@@ -147,7 +150,14 @@ list of options with one marked *recommended* and pre-selected, so the user can 
 swap. This recommend-first pattern is not special to the interview — it's how the skill presents
 *any* set of options it offers (framework and model lists, alternatives during the plan readback or
 an edit): a recommendation always sits at the top, because a suggestion with no front-runner hands
-the user back the very decision the opinionated-defaults stance exists to make for them. Typical
+the user back the very decision the opinionated-defaults stance exists to make for them. The one
+place it deliberately does *not* apply is a binary confirm-to-proceed sign-off — the task
+restatement, the plan readback, the build offer, an edit confirmation. There the two branches are
+"proceed" and "change it", and the skill lists Confirm first but leaves it unmarked: a `(recommended)`
+stamp only makes sense when there's a field of competing options to crown a front-runner of, and a
+proceed/alter checkpoint isn't that. The marker would also work against the checkpoint's purpose,
+which is to make the user actually *look* before proceeding rather than wave the recommended choice
+through, and against the rule that the alter branch stays exactly as prominent as Confirm. Typical
 questions:
 
 - **Interaction style.** How the user drives the app — asked the way the user thinks about it ("how do you
@@ -156,8 +166,8 @@ questions:
   are different *interaction* surfaces, not different stacks, which is why this is one interview choice rather
   than a stack decision; the native-vs-cross-platform stack is settled separately only when the app has a
   window.
-- **Theme.** Dark *(recommended)* · light · minimal. The recommended Dark is the skill's opinionated branded look (the
-  former "default theme" option, folded into Dark for now); light and minimal are the plainer overrides.
+- **Theme.** Light *(recommended)* · dark · minimal. The recommended Light is the skill's opinionated branded look (the
+  former "default theme" option, folded into Light for now); dark and minimal are the plainer overrides.
 - **Run model.** On a schedule *(recommended for digests/monitors)* · on demand. A scheduled app
   gets native scheduler config generated for it (see *Scheduling*).
 - **Inference.** Deterministic only *(recommended when possible)* · local model for specific steps ·

@@ -90,7 +90,11 @@ same misread caught after the build is a redo. This two-option shape is how the 
 needs one, and wherever the AskUserQuestion tool is available the two branches are presented as **selectable options the
 user picks, not a reply they type** (a confirm-to-proceed option paired with an equally visible alter-it option): never
 a bare "okay?", always two concrete branches to choose between instead of an open-ended question. Letting the user
-select rather than type is what keeps every checkpoint low-friction. The moment the task is pinned, **the very first question you ask is always the app's name
+select rather than type is what keeps every checkpoint low-friction. One deliberate departure from the recommend-first
+habit below applies here: a confirm-to-proceed sign-off does **not** mark its Confirm branch `(recommended)`. Listing
+Confirm first already signals the default path, and unlike an interview question there's no field of competing options to
+rank — both branches are the user's to weigh — so a `(recommended)` stamp on Confirm would only nudge the user past the
+review the checkpoint exists to force and undercut keeping the alter-it branch exactly as prominent. The moment the task is pinned, **the very first question you ask is always the app's name
 and display name** (see below) — unless the request already supplied both, in which case you skip it like any other
 already-answered question. The name comes first because it anchors the folder, the docs, and everything downstream;
 settling it before any other choice means nothing downstream has to be renamed later. With the name settled, look for
@@ -128,7 +132,10 @@ with a recommendation at the top.** Wherever the run offers a choice — the int
 model lists, alternatives floated during the plan readback, options proposed while editing an existing app — name the
 pick you'd make, mark it `(recommended)`, and place it first. A suggestion set with no clear front-runner hands the user
 back the very decision the skill exists to make for them, so always try your best to surface one even when the field is
-close; the recommendation is the skill doing its job, the rest of the list is the user's room to deviate.
+close; the recommendation is the skill doing its job, the rest of the list is the user's room to deviate. The lone
+exception is the binary confirm-to-proceed sign-off described above (and again at the plan readback): it has no field of
+options to rank, so its Confirm branch leads but stays unmarked. The recommend-first rule is about picking a front-runner
+out of a set; a two-branch "proceed or change it" isn't that set.
 
 The second habit, called out specifically because it's high-leverage: **if the task as described seems to need a model,
 look for a deterministic shape first.** A user who says "categorize my downloads" usually means "look at the extension
@@ -210,15 +217,18 @@ and the per-option rationales for each.
   Tkinter (≈10–30 MB) as the always-available fallback. Don't silently default to Tkinter, and don't lead with Electron
   just because npm happens to be installed — on a Mac, native Swift (SwiftUI) leads. The pick lands in
   `<os>-specific.md`.
-- **Color theme** (windowed only). Dark (recommended), light, or minimal — the three options
+- **Color theme** (windowed only). Light (recommended), dark, or minimal — the three options
   `design.md` → "Opinionated defaults & the interview" calls out. The separate "default theme" option is removed for
-  now; the recommended **Dark** *is* the skill's opinionated branded style, defined in full in
-  `references/default-theme.md` (a warm dark canvas calibrated to Claude's desktop look, soft borders, a single coral
-  accent, light off-white text set explicitly so it never inherits the OS light-mode default, a unified title bar that
-  extends into a continuous "header band" with the header/table-header row, and a thin footer attribution strip).
-  Selecting Dark applies the whole package, not just a background color, while "light" / "minimal" are the plainer
-  alternatives for a user who wants to override it. (Dark being the recommended default is the one knob to flip if that's
-  revisited — an earlier draft was light-first.) The point is that the user never has to specify a design.
+  now; the recommended **Light** *is* the skill's opinionated branded style, defined in full in
+  `references/default-theme.md` (a warm paper/cream canvas calibrated to Claude's desktop look, soft warm-grey borders, a
+  single coral accent, warm near-black text and a light surface set explicitly so the app never inherits a dark-mode
+  host's chrome, Tailwind-style corner radius and components, a subtle elevation shadow on raised surfaces, a unified
+  title bar that extends into a continuous "header band" with the header/table-header row, and a thin footer attribution
+  strip). The palette and shape rules are stated as **framework-agnostic tokens** — a single source of truth that maps
+  onto SwiftUI, WinUI, a webview, or Tkinter alike — so the look is identical regardless of the stack the app is built
+  on. Selecting Light applies the whole package, not just a background color, while "dark" / "minimal" are the plainer
+  alternatives for a user who wants to override it. (Light being the recommended default is the one knob to flip if that's
+  revisited — an earlier draft was dark-first.) The point is that the user never has to specify a design.
 - **Data storage format.** SQLite (**strongly recommended — the default for storing data locally**), JSON, text file,
   or user-provided. SQLite is the heavily weighted default and leads the list, marked `(recommended)` and pre-selected:
   it's a single self-contained file needing no server, it covers the widest range of apps (anything queryable or
@@ -314,7 +324,8 @@ app's name is shown clearly above the table. The reason for the table is purely 
 here is a one-minute conversation; the same disagreement caught after the code exists is a rewrite, and a tier buried
 in a sentence is a tier the user skims past. So show the steps and their tiers in the table, show the name, and **close
 with the two choices presented as a selectable question — not a request to type a reply.** Use the AskUserQuestion tool
-to offer exactly two options: **"Confirm — build this plan as shown"** (recommended, listed first) and **"Alter the
+to offer exactly two options: **"Confirm — build this plan as shown"** (listed first, but *not* marked `(recommended)` —
+this is the confirm-to-proceed exception to the recommend-first rule) and **"Alter the
 plan"** (change a step's tier, the app's name, or the approach — the skill revises and reads the plan back). The user
 signs off by *selecting*, not by typing `confirm`: the goal is to make building the app as low-friction as possible,
 so the one decision the user must make before code exists is a single click rather than a free-text reply they might
@@ -348,9 +359,11 @@ App: Manga Watcher
 ```
 
 Then, **don't end with a bare "okay?" and don't ask the user to type anything — present the two choices as a
-selectable question** (AskUserQuestion), recommend-first:
+selectable question** (AskUserQuestion). Confirm leads, but — this being a confirm-to-proceed checkpoint — it carries
+*no* `(recommended)` marker; its leading position is the only signal it needs, and marking it would lean on the user
+past the review the readback exists to prompt:
 
-- **Confirm — build this plan as shown** *(recommended)* — proceed to generate, build, and validate the app exactly as
+- **Confirm — build this plan as shown** — proceed to generate, build, and validate the app exactly as
   laid out above.
 - **Alter the plan** — change a step's tier, the app's name, or the approach; the skill asks what to change, revises,
   and reads the plan back.
@@ -433,16 +446,26 @@ plaintext on disk. Fixing the regex while you're looking at it is cheaper than c
 `references/packaging.md` → "Security review" has the checklist.
 
 **The windowed default is a real theme, not bare Tkinter.** If the app has a window, apply `references/default-theme.md`:
-a clean dark palette calibrated to Claude's desktop look (dark-first for now), rounded corners on every container and
-control, a single system font, and — two rules that break most often — **a title bar painted the same color as the body**
-(never the OS-default chrome strip), and **every text element set explicitly to the theme's light `text` token**. The
-second matters because controls that don't set their own foreground inherit the OS default, which is black on a
-light-mode host — so the app renders dark-background with black text and "still looks like the light theme." Set
-foreground on every label, input, table cell, and header, not just the window background. Take it one step
+a clean light palette calibrated to Claude's desktop look (light-first for now) with Tailwind-style corner radius and
+components, a single system font, and — two rules that break most often — **a title bar painted the same color as the
+body** (never the OS-default chrome strip), and **both background and foreground set explicitly on every element, with
+the window forced to a light appearance**. The second matters because controls that don't set their own colors inherit
+the OS default, which is a dark surface on a dark-mode host — so a light-themed app renders dark patches and washed-out
+text and "doesn't actually look light." Set `surface`/`canvas` backgrounds *and* the `text` foreground on every label,
+input, table cell, and header, and declare the light color-scheme/appearance so OS dark mode can't leak through. Take it
+one step
 further where the app has a header row: paint the title bar, header, and table-header as one continuous "header band" so
 they read as a single piece of chrome, and for menu-bar apps reapply the window chrome on every reopen (the
-activation-policy toggle drops it otherwise). "Modern desktop app" is the bar users expect now; an app that doesn't clear
-it reads as broken even when it works. Also decode HTML entities at the point outside text enters the app
+activation-policy toggle drops it otherwise). **Any transient popup panel the UI floats over its content — a settings
+flyout, a model picker, a filter dropdown, a small detail popover — is dismissible by clicking outside it** (the same
+light-dismiss affordance every modern desktop app has); a click on the surrounding canvas closes the panel without
+committing a change, so the user never gets trapped in a panel with no obvious way out. **The app's content fills the
+window — the body, any table, and the footer stretch to the window's bounds and keep filling it as the user resizes** —
+rather than a fixed-size layout pinned to the top-left that leaves dead canvas down the side and along the bottom. A
+window whose content doesn't reach its own edges is the other dead giveaway of a generated app: the table should take
+the available width and grow its row area to the available height, and the footer should sit on the bottom edge, not
+float halfway up. "Modern desktop app" is the bar
+users expect now; an app that doesn't clear it reads as broken even when it works. Also decode HTML entities at the point outside text enters the app
 (`html.unescape()` in Python, `textContent` not `innerHTML` in a webview) so the UI shows `Dave's "news"` and not
 `Dave&#039;s &quot;news&quot;`. Deviate from the theme only when the user asked for something else and you recorded it in
 `AUTHORING.md`.
