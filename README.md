@@ -3,6 +3,9 @@
 An agent skill that turns a plain-language description of a small, repetitive desktop task into a
 self-contained native app — generated, built, and validated on the user's own machine.
 
+[Example Desktop Apps](https://github.com/hansololz/desktop-app-creator-examples/tree/main/example-apps)
+created with this skill.
+
 ## The problem it solves
 
 A lot of useful desktop tasks are small, manual, and repetitive: checking a webpage for a change,
