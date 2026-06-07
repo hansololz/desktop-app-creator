@@ -5,10 +5,11 @@ and shouldn't have to — so the skill ships one opinionated, coherent look and 
 package when the user accepts the default. "Modern desktop app" is the bar users expect now; an app
 that doesn't clear it reads as broken even when it works.
 
-**The default is dark-first for now.** (An earlier draft was light-first; this is the one knob to
-flip if that's ever revisited.) The "light" / "dark" / "minimal" theme options are the plainer
-alternatives for a user who explicitly overrides the default. Deviate from this theme only when the
-user asked for something else and you recorded it in `AUTHORING.md`.
+**The recommended theme is this branded dark look, surfaced in the interview as "Dark."** There is no
+separate "default theme" option for now — Dark *is* the default the skill applies. (An earlier draft was
+light-first; Dark-as-default is the one knob to flip if that's ever revisited.) The "light" / "minimal"
+theme options are the plainer alternatives for a user who explicitly overrides the default. Deviate from
+this theme only when the user asked for something else and you recorded it in `AUTHORING.md`.
 
 ## The palette
 

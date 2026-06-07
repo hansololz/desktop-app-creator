@@ -131,6 +131,7 @@ string into `APP.md`.
 ## Recording the plan in APP.md
 
 Each step in `APP.md` records: the action, its tier, and (for local/hosted) the named model. For a
-declared fallback, both paths appear. The plan readback to the user mirrors this list — numbered
-steps, each tagged deterministic / local / hosted with the model named — so the tier conversation
-happens before any code exists.
+declared fallback, both paths appear. The plan readback to the user mirrors this as a table with the
+same four columns the worked examples above use — **`#` / `Step` / `Tier` / `Why`**, one row per
+step, the model named in `Tier` for local and hosted steps — so every step and its tier is scannable
+and the tier conversation happens before any code exists.

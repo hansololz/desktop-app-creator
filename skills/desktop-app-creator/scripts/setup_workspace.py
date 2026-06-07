@@ -107,7 +107,7 @@ def validate_display_name(raw: str) -> str:
 
 def detect_os() -> str:
     system = platform.system()
-    mapping = {"Darwin": "macos", "Windows": "windows", "Linux": "linux"}
+    mapping = {"Darwin": "mac-os", "Windows": "windows", "Linux": "linux"}
     if system not in mapping:
         sys.exit(
             f"Unsupported host OS: {system!r}. desktop-app-creator supports "
@@ -158,7 +158,7 @@ ASSETS_DIR = Path(__file__).resolve().parent.parent / "assets"
 # .png for the .desktop entry. A user-provided icon simply overwrites these files
 # in resources/ later — the build picks up whatever is there.
 DEFAULT_ICON_ASSETS = {
-    "macos": ["icon.icns", "icon.png"],
+    "mac-os": ["icon.icns", "icon.png"],
     "windows": ["icon.ico"],
     "linux": ["icon.png"],
 }

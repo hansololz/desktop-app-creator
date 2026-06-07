@@ -23,7 +23,7 @@ add/replace per the OS folders present in this project.
 **macOS**
 
 ```bash
-cd macos
+cd mac-os
 ./build.sh                       # produces dist/{{DISPLAY_NAME}}.app
 open "dist/{{DISPLAY_NAME}}.app" # run it
 ```

@@ -48,7 +48,7 @@ The user has it on Windows and now wants it on their Mac. The behavior is alread
    python3 scripts/setup_workspace.py --add-os --name <app-slug> --root <path-to-root>
    ```
 
-   `--add-os` detects the host OS and adds a sibling folder (e.g. `macos/` next to `windows/`). It
+   `--add-os` detects the host OS and adds a sibling folder (e.g. `mac-os/` next to `windows/`). It
    **refuses to clobber** an existing OS folder — if the host's folder already exists, it errors
    rather than overwriting.
 4. **Generate, build, validate** the new OS folder exactly as in a fresh run — it's the same Stage

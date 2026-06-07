@@ -53,8 +53,10 @@ fallback means the tier was wrong in the plan. `references/steps.md` has worked 
 
 A run only ever targets the OS it's running on. There is no cross-compilation and no "which OS?"
 question — detect the host, build for it, record that. macOS, Windows, and Linux are each
-supported as a host. If the user wants the same app on a second OS, they run the skill again on
-that machine and it adds a sibling OS folder (see *Editing existing apps*).
+supported as a host. The per-OS folder is named for the host: **`mac-os/` on macOS**, `windows/` on
+Windows, `linux/` on Linux (the OS-specific notes file follows it — `mac-os-specific.md`). If the
+user wants the same app on a second OS, they run the skill again on that machine and it adds a
+sibling OS folder (see *Editing existing apps*).
 
 ## The progress checklist
 
@@ -88,7 +90,7 @@ workspaces/<app-name>/
 ├── README.md            # what the app does, how to run it — for the user
 ├── AUTHORING.md         # original request + authoring decisions — common to every OS
 ├── APP.md               # the app's contract: inputs, outputs, behavior, per-step tier
-└── <os>/                # macos/ windows/ or linux/ — the current OS
+└── <os>/                # mac-os/ windows/ or linux/ — the current OS
     ├── <os>-specific.md # OS-specific interview answers and packaging notes
     ├── main.py          # the app entry point
     ├── build.{sh,bat}   # build script that produces the native artifact
@@ -127,10 +129,13 @@ enough that you — or a future edit — could build the app from them without a
 The full question list, exact phrasing, per-option rationales, and the **step-by-step "How to run
 it" flow** live in **`references/interview.md`** — read it before you start interviewing. Run the
 interview as a *sequence, not a form dump*: let the user describe the task in their own words,
-restate it back and wait for a confirm, look for a deterministic shape before reaching for any
-model, then ask the structured questions — **the app's name first**, since it anchors the folder,
-the docs, and the artifact and is worth settling before anything else — and close with the plan
-readback. The habits that make or break the interview:
+restate it back and close with the two-option confirm (confirm it's right, or tell you what to fix),
+then **ask the app's name and display name as the very first
+question** — before anything else, skipped only if the request already supplied both — since it
+anchors the folder, the docs, and the artifact and settling it first means nothing downstream has to
+be renamed. Only then look for a deterministic shape before reaching for any model, work through the
+rest of the structured questions, and close with the plan readback. The habits that make or break
+the interview:
 
 - **Propose a concrete default for every question.** Read what the user already told you, infer
   the pick you'd make, and present it as the thing to confirm. The user's job should be reacting to
@@ -139,7 +144,10 @@ readback. The habits that make or break the interview:
 - **Always make a recommendation, and give every option a one-line rationale.** Every structured
   question names the option you'd pick (marked `(recommended)`, placed first) and puts a short
   "when you'd pick this" on each choice, so options are told apart at a glance. A question with no
-  recommended pick hands the user back the work they came to offload.
+  recommended pick hands the user back the work they came to offload. This holds for **every set of
+  suggestions you put in front of the user**, not just interview questions — framework and model
+  lists, alternatives floated at the plan readback, options proposed while editing — always try your
+  best to lead with a recommendation at the top.
 - **Keep the list short — five at most.** If a question has more candidates, show only the handful
   worth considering for *this* app and fold the rest into one user-provided escape hatch.
 - **If the task seems to need a model, look for a deterministic shape first.** "Categorize my
@@ -184,11 +192,16 @@ chosen model-first too: check what's currently popular for the step's job before
 
 ### The plan readback
 
-Before any code is written, read the plan back for sign-off — the numbered steps each tagged
-deterministic / local / hosted (model named for local and hosted), with the app name shown
-clearly. The reason is economic: a tier disagreement caught here is a one-minute conversation; the
-same disagreement caught after the code exists is a rewrite. Make both edges impossible to skim
-past — a banner at the top, an unmistakable confirmation at the bottom:
+Before any code is written, read the plan back for sign-off. **Show every step the app will perform
+and the tier each runs at as a table** — one row per step, columns **`#` / `Step` / `Tier` /
+`Why`** (`Tier` is deterministic / local / hosted with the model named for local and hosted steps;
+`Why` is the one-line justification) — with the app name shown clearly above it. A table, not a
+prose paragraph or a bare list: the readback exists to make the per-step tier decisions scannable so
+a wrong one jumps out, and it's the same four-column shape the worked examples in
+`references/steps.md` use. The reason is economic: a tier disagreement caught here is a one-minute
+conversation; the same disagreement caught after the code exists is a rewrite. Make both edges
+impossible to skim past — a banner at the top, and a **selectable two-option sign-off at the bottom**
+(below):
 
 ```
 ----------------------------------------
@@ -196,9 +209,36 @@ START OF PLAN
 ----------------------------------------
 ```
 
-…app name and numbered step list in the middle, and on its own line at the bottom, bolded:
-**"Reply `confirm` to proceed, or tell me what to change."** Wait for an explicit confirm. This is
-the one decision the user must make consciously before code exists.
+…app name and the step/tier table in the middle:
+
+```
+App: Manga Watcher
+
+| # | Step                                                 | Tier          | Why                       |
+|---|------------------------------------------------------|---------------|---------------------------|
+| 1 | Read followed series URLs from SQLite                | Deterministic | DB query                  |
+| 2 | Fetch each series' manga page over HTTP              | Deterministic | HTTP GET — a precise rule |
+| 3 | Parse the chapter list out of the HTML, dedup by URL | Deterministic | Selector + regex fallback |
+| 4 | Diff against SQLite, insert new chapters as unread   | Deterministic | Set diff                  |
+| 5 | Post one macOS notification if anything is new       | Deterministic | UNUserNotificationCenter  |
+| 6 | Render the window over the SQLite store              | Deterministic | SwiftUI views             |
+```
+
+…and at the bottom, **don't ask the user to type `confirm` — present the two choices as a selectable
+question** (the AskUserQuestion tool), recommend-first:
+
+- **Confirm — build this plan as shown** *(recommended, listed first)* — proceed to generate, build,
+  and validate the app exactly as laid out above.
+- **Alter the plan** — change a step's tier, the app's name, or the approach; ask what to change,
+  revise, and read the plan back the same way.
+
+The user signs off by *selecting*, not by typing — that's what makes building the app low-friction:
+they just pick what they want and the build proceeds. Keep "Alter the plan" exactly as prominent as
+"Confirm" so asking for changes is a first-class option, not a deviation. This is the one decision
+the user must make consciously before code exists, and a two-button choice can't be waved through
+the way a buried "okay?" can. Use the same **selectable** two-option shape for *every* sign-off —
+the task restatement, the build offer, an edit confirmation — never an open-ended question and never
+a request to type a magic word.
 
 ## Stage 2 — Generate
 
@@ -236,11 +276,14 @@ chrome on every reopen. Decode HTML entities where outside text enters (`html.un
 Python, `textContent` not `innerHTML` in a webview). Deviate only when the user asked for something
 else and you recorded it in `AUTHORING.md`.
 
-**Framework order:** native first and recommended — on macOS that's **native Swift (SwiftUI)**, on
-Windows WinUI, on Linux GTK/Qt — then the cross-platform options *the host can actually build*, each
-with its size estimate. Name only the host's native toolkit; don't enumerate other platforms'
-frameworks (on a Mac, surfacing "Windows"/WinUI makes the user think they're building a Windows
-app). Cross-compilation is out.
+**Framework order:** native first and heavily recommended — **on macOS that's native Swift (SwiftUI),
+the strongly weighted default for a Mac GUI** (smallest/fastest, most native-feeling, the toolkit the
+theme is tuned to, no extra toolchain), on Windows WinUI, on Linux GTK/Qt — then the cross-platform
+options *the host can actually build*, each with its size estimate. Lead with SwiftUI on a Mac and
+let it stand unless the user explicitly wants a webview/Tailwind look or a stack they already run.
+Name only the host's native toolkit; don't enumerate other platforms' frameworks (on a Mac,
+surfacing "Windows"/WinUI makes the user think they're building a Windows app). Cross-compilation is
+out.
 
 **Generate the tests too.** Alongside `main.py`, write tests derived from the input/output
 contract in `APP.md` — exact-match assertions for deterministic steps, looser schema/shape/sanity

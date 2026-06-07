@@ -46,7 +46,7 @@ points `--icon` at the file that's there.
   binary for CLI). Set the bundle name to the display name.
 - Icon: `--icon resources/icon.icns` (prefer the `.icns`; fall back to `resources/icon.png` if no
   `.icns` is present). Both ship by default, so this resolves out of the box.
-- Note in `macos-specific.md`: **Gatekeeper** will quarantine an unsigned app downloaded from the
+- Note in `mac-os-specific.md`: **Gatekeeper** will quarantine an unsigned app downloaded from the
   web; the user may need `xattr -dr com.apple.quarantine "Receipt Filer.app"` or a right-click→Open.
   Signing/notarization is out of scope by default (`design.md` → "Future work") — record the
   caveat, don't silently ship something that won't open.
@@ -129,11 +129,11 @@ a known branch of authoring, not a failure. Send one short message with exactly 
 2. **The exact command, with the working directory shown** — so the user can copy-paste:
 
    ```
-   cd workspaces/<app-name>/macos
+   cd workspaces/<app-name>/mac-os
    ./build.sh
    ```
 
-3. **Where the artifact lands when it succeeds** — `workspaces/<app-name>/macos/dist/<Display Name>.app`.
+3. **Where the artifact lands when it succeeds** — `workspaces/<app-name>/mac-os/dist/<Display Name>.app`.
 
 Then offer to walk them through it. Lean toward actually completing the build whenever you can — an
 app the user has to package themselves is one they may never run.

@@ -89,7 +89,7 @@ workspaces/<desktop-app-name>/
     README.md            # what the app does, how to run it (for the user)
     AUTHORING.md         # the original request + authoring decisions (for the model and future edits)
     APP.md               # the app's contract: inputs, outputs, behavior, per-step tier
-    <os>/                # one directory per host OS the skill has run on (e.g. macos, windows, linux)
+    <os>/                # one directory per host OS the skill has run on (e.g. mac-os, windows, linux)
         <os>-specific.md # OS-specific notes: dependencies, entitlements, signing, scheduler config
         main.py          # the app entry point
         build.{sh,bat}   # build script that produces the native artifact
@@ -122,9 +122,18 @@ The defaults cover both *technology* and *theme*:
 
 - **Technology.** A standard stack the skill knows how to generate, build, and test reliably —
   for example Python for the app logic, a chosen GUI/CLI approach, PyInstaller for packaging, and a
-  local-model interface for steps that need inference. Constraining the stack is what makes
-  generation and validation dependable; the skill is good at a few technologies rather than mediocre
-  at many.
+  local-model interface for steps that need inference. A windowed app's GUI has a heavily weighted
+  default: the **host's native toolkit** — **native Swift (SwiftUI) on macOS**, WinUI on Windows,
+  GTK/Qt on Linux — because it produces the smallest, fastest, most native-feeling artifact and is
+  the toolkit the default theme is calibrated against. Cross-platform options (Electron, Tauri,
+  PySide6) stay available when the user wants a webview look or a stack they already run, but native
+  is the default the skill leads with on each OS. Local persistence has a heavily weighted default
+  too: **SQLite**, a single self-contained file that needs no server, covers queryable and relational
+  data, and scales down to trivial state as cleanly as it scales up — so it's the safe pick for
+  almost any app and rarely the wrong one. Lighter stores (a JSON file, a flat text log) remain
+  available for genuinely trivial shapes, but SQLite is the default the skill leans on. Constraining
+  the stack is what makes generation and validation dependable; the skill is good at a few
+  technologies rather than mediocre at many.
 - **Theme.** A consistent default visual style (layout, typography, color, iconography) so apps
   look coherent without the user having to specify design. The user can override it, but never has
   to. Iconography is part of this: the skill ships a real default icon and the scaffold wires it into
@@ -135,7 +144,11 @@ The defaults cover both *technology* and *theme*:
 
 These choices are made through a short **interview**. The skill presents each decision as a small
 list of options with one marked *recommended* and pre-selected, so the user can skim, accept, or
-swap. Typical questions:
+swap. This recommend-first pattern is not special to the interview — it's how the skill presents
+*any* set of options it offers (framework and model lists, alternatives during the plan readback or
+an edit): a recommendation always sits at the top, because a suggestion with no front-runner hands
+the user back the very decision the opinionated-defaults stance exists to make for them. Typical
+questions:
 
 - **Interaction style.** How the user drives the app — asked the way the user thinks about it ("how do you
   want to interact with this?"): just double-click it (headless/scheduled, no window) · menu-bar/tray · a
@@ -143,7 +156,8 @@ swap. Typical questions:
   are different *interaction* surfaces, not different stacks, which is why this is one interview choice rather
   than a stack decision; the native-vs-cross-platform stack is settled separately only when the app has a
   window.
-- **Theme.** Default theme *(recommended)* · light · dark · minimal.
+- **Theme.** Dark *(recommended)* · light · minimal. The recommended Dark is the skill's opinionated branded look (the
+  former "default theme" option, folded into Dark for now); light and minimal are the plainer overrides.
 - **Run model.** On a schedule *(recommended for digests/monitors)* · on demand. A scheduled app
   gets native scheduler config generated for it (see *Scheduling*).
 - **Inference.** Deterministic only *(recommended when possible)* · local model for specific steps ·

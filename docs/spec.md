@@ -66,7 +66,9 @@ and offer to narrow it to an app-shaped piece (`design.md` → "Non-Requirements
 
 A run only ever targets the OS it's running on. There's no cross-compilation and no "which OS?" question — the skill
 detects the host, builds for it, and records that. macOS, Windows, and Linux are each supported as a host; the layout,
-build scripts, and scheduler glue all have a per-OS path. If the user wants the same app on a second OS, they run the
+build scripts, and scheduler glue all have a per-OS path. The per-OS folder is named for the host: **`mac-os/` on
+macOS**, `windows/` on Windows, and `linux/` on Linux (and the OS-specific notes file follows the folder —
+`mac-os-specific.md`). If the user wants the same app on a second OS, they run the
 skill again on that machine and it adds a sibling OS folder to the existing project (see *Editing existing apps*). The
 reason is in `design.md` → "Target OS is the host OS": cross-compilation introduces a class of works-on-my-machine bugs
 that are hard to catch from inside an authoring run, and predictability is worth more than the convenience.
@@ -82,13 +84,20 @@ user anything else.
 
 The interview runs as a **sequence, not a form dump**, and the order is doing work. First, let the user
 describe the task in their own words — don't interrupt with structured questions yet. Then restate it back in a
-sentence or two and wait for a confirm; a misread task caught here is one sentence to fix, the same misread caught
-after the build is a redo. Only with the task pinned do you reach for the structured questions, and the first of
-them is always the **app's name** (see below) — it anchors the folder, the docs, and everything downstream, so it's
-the question always worth asking up front. Run the rest in order, skipping any the request already answered, look
-for a deterministic shape before any model along the way (the high-leverage habit called out below), and close with
-the plan readback. Fixing the order is the same economics the whole stage runs on: the cheapest place to catch a
-wrong assumption is the earliest one. `references/interview.md` → "How to run it" has the step-by-step.
+sentence or two and close it the same way every checkpoint closes — two explicit options, **confirm it's right or tell
+me what I got wrong** — rather than a vague "did I get that?"; a misread task caught here is one sentence to fix, the
+same misread caught after the build is a redo. This two-option shape is how the skill asks for sign-off *anywhere* it
+needs one, and wherever the AskUserQuestion tool is available the two branches are presented as **selectable options the
+user picks, not a reply they type** (a confirm-to-proceed option paired with an equally visible alter-it option): never
+a bare "okay?", always two concrete branches to choose between instead of an open-ended question. Letting the user
+select rather than type is what keeps every checkpoint low-friction. The moment the task is pinned, **the very first question you ask is always the app's name
+and display name** (see below) — unless the request already supplied both, in which case you skip it like any other
+already-answered question. The name comes first because it anchors the folder, the docs, and everything downstream;
+settling it before any other choice means nothing downstream has to be renamed later. With the name settled, look for
+a deterministic shape before any model (the high-leverage habit called out below), then run the rest of the structured
+questions in order, skipping any the request already answered, and close with the plan readback. Fixing the order is
+the same economics the whole stage runs on: the cheapest place to catch a wrong assumption is the earliest one.
+`references/interview.md` → "How to run it" has the step-by-step.
 
 The single most important habit, and the one easiest to skip under time pressure, is this: **propose a concrete default
 for every question.** Read what the user already told you, infer the pick you'd make, and present it as the thing to
@@ -113,6 +122,13 @@ candidates than that, show only the handful worth considering for *this* app and
 user-provided escape hatch; a wall of options is the same decision fatigue a blank menu causes. And **put the best
 option at the top, marked `(recommended)`** — order isn't cosmetic, the user reads top-down and the recommended pick
 should be the first thing they see, so the rest of the list reads as "or, if not that, here's why you'd deviate."
+
+This last rule is not confined to the interview: **every set of suggestions the skill puts in front of the user leads
+with a recommendation at the top.** Wherever the run offers a choice — the interview questions, the UI-framework and
+model lists, alternatives floated during the plan readback, options proposed while editing an existing app — name the
+pick you'd make, mark it `(recommended)`, and place it first. A suggestion set with no clear front-runner hands the user
+back the very decision the skill exists to make for them, so always try your best to surface one even when the field is
+close; the recommendation is the skill doing its job, the rest of the list is the user's room to deviate.
 
 The second habit, called out specifically because it's high-leverage: **if the task as described seems to need a model,
 look for a deterministic shape first.** A user who says "categorize my downloads" usually means "look at the extension
@@ -177,28 +193,42 @@ and the per-option rationales for each.
   system startup. A scheduled or startup app gets native scheduler config generated for it — a launchd `.plist` on
   macOS, a Task Scheduler XML on Windows, a `.desktop` autostart entry on Linux — written into `resources/` with a short
   how-to-install note (`design.md` → "Scheduling"). The OS, not a daemon the app ships, is what triggers the run.
-- **UI framework** (windowed only). The first option is always the **host OS's native** framework and you recommend
-  it — smallest binary, lightest at run time, closest match for the look the theme is calibrated to. On macOS that's
-  **native Swift (SwiftUI)** and it's the top recommendation for a Mac GUI; on Windows it's WinUI; on Linux, GTK/Qt.
-  Name only the *host's* native toolkit — a run only ever targets the OS it's on (see *Platform support*), so listing
-  another platform's framework is noise. On macOS in particular, never surface "Windows" or WinUI to the user: they're
-  building a Mac app, and a Windows framework in the list reads as though the skill is about to build the wrong thing.
-  Detect what else the host supports (`shutil.which("npm")` for Electron, `shutil.which("cargo")` for Tauri) and offer
-  the cross-platform options *only when their toolchain is present*, each with a rough installed size in the label so the
-  trade-off is visible: native (≈5–15 MB), Electron + Tailwind (≈80–150 MB, npm only), Tauri (≈5–20 MB, Rust only),
-  PySide6 (≈40–80 MB), Tkinter (≈10–30 MB) as the always-available fallback. Don't silently default to Tkinter, and
-  don't lead with Electron just because npm happens to be installed. The pick lands in `<os>-specific.md`.
-- **Color theme** (windowed only). Default theme (recommended), light, dark, or minimal — the four options
-  `design.md` → "Opinionated defaults & the interview" calls out. The default is the skill's opinionated branded style,
-  and **for now that style is dark** — defined in full in `references/default-theme.md` (a warm dark canvas calibrated
-  to Claude's desktop look, soft borders, a single coral accent, light off-white text set explicitly so it never inherits
-  the OS light-mode default, a unified title bar that extends into a continuous "header band" with the header/table-header
-  row, and a thin footer attribution strip); selecting it applies the whole package, not just a background color, while
-  "light" / "dark" / "minimal" are the plainer alternatives for a user who wants to override it. (An earlier draft was
-  light-first; the skill is dark-first for now, and this is the one knob to flip if that's revisited.) The point is that
-  the user never has to specify a design.
-- **Data storage format.** SQLite, text file, JSON, or user-provided — pick whatever fits the data shape (SQLite for
-  anything queryable, JSON for small structured state, text for append-only logs).
+- **UI framework** (windowed only). The first option is always the **host OS's native** framework and you recommend it
+  heavily — smallest binary, lightest at run time, closest match for the look the theme is calibrated to. **On macOS
+  that's native Swift (SwiftUI), and it's the strongly weighted default for a Mac GUI** — mark it `(recommended)`,
+  pre-select it, and lead with it plainly: it produces the smallest, fastest, most native-feeling Mac app, it's the
+  toolkit `references/default-theme.md` is tuned against, and it needs no extra toolchain to install. Treat SwiftUI as
+  the framework a Mac app gets unless the user has a concrete reason to deviate; the bar for steering them off it is
+  high, and a cross-platform option should win only when the user explicitly wants a webview/Tailwind look or a stack
+  they already run. On Windows the native default is WinUI; on Linux, GTK/Qt. Name only the *host's* native toolkit — a
+  run only ever targets the OS it's on (see *Platform support*), so listing another platform's framework is noise. On
+  macOS in particular, never surface "Windows" or WinUI to the user: they're building a Mac app, and a Windows framework
+  in the list reads as though the skill is about to build the wrong thing. Detect what else the host supports
+  (`shutil.which("npm")` for Electron, `shutil.which("cargo")` for Tauri) and offer the cross-platform options *only when
+  their toolchain is present*, each with a rough installed size in the label so the trade-off against native is visible:
+  native (≈5–15 MB), Electron + Tailwind (≈80–150 MB, npm only), Tauri (≈5–20 MB, Rust only), PySide6 (≈40–80 MB),
+  Tkinter (≈10–30 MB) as the always-available fallback. Don't silently default to Tkinter, and don't lead with Electron
+  just because npm happens to be installed — on a Mac, native Swift (SwiftUI) leads. The pick lands in
+  `<os>-specific.md`.
+- **Color theme** (windowed only). Dark (recommended), light, or minimal — the three options
+  `design.md` → "Opinionated defaults & the interview" calls out. The separate "default theme" option is removed for
+  now; the recommended **Dark** *is* the skill's opinionated branded style, defined in full in
+  `references/default-theme.md` (a warm dark canvas calibrated to Claude's desktop look, soft borders, a single coral
+  accent, light off-white text set explicitly so it never inherits the OS light-mode default, a unified title bar that
+  extends into a continuous "header band" with the header/table-header row, and a thin footer attribution strip).
+  Selecting Dark applies the whole package, not just a background color, while "light" / "minimal" are the plainer
+  alternatives for a user who wants to override it. (Dark being the recommended default is the one knob to flip if that's
+  revisited — an earlier draft was light-first.) The point is that the user never has to specify a design.
+- **Data storage format.** SQLite (**strongly recommended — the default for storing data locally**), JSON, text file,
+  or user-provided. SQLite is the heavily weighted default and leads the list, marked `(recommended)` and pre-selected:
+  it's a single self-contained file needing no server, it covers the widest range of apps (anything queryable or
+  relational, a searchable history), and — the reason to lean on it hard — it scales *down* to simple state as cleanly
+  as it scales up, so picking it is never the wrong call and never forces a later migration. Treat it as the default the
+  app gets unless the user has a concrete reason to deviate; lead with it, recommend it plainly, and let it stand unless
+  a lighter store *clearly* fits a genuinely trivial shape — JSON only when the app keeps a single small blob of
+  structured state like a last-seen timestamp, a text file only for a purely append-only log, user-provided only when
+  the user already has a store to write into. The bar for talking the user *out* of SQLite is high: when in doubt, store
+  it in SQLite.
 - **Data location.** Same directory as the app, home directory, a mounted drive, or user-provided. Home directory is the
   boring-but-correct default; "same directory" breaks the moment the user moves the binary.
 - **UI description** (windowed only, free text). What windows exist, what controls each has, what happens when each is
@@ -273,14 +303,28 @@ the user or the provider's model list, and write the verified string into `APP.m
 
 ### The plan readback
 
-Before any code gets written, read the plan back to the user for sign-off — a step-by-step list of the steps, each
-tagged deterministic / local / hosted (with the model named for local and hosted steps), and the app's name shown
-clearly. The reason is purely economic: a tier disagreement caught here is a one-minute conversation; the same
-disagreement caught after the code exists is a rewrite. So show the steps, show the name, and wait for an explicit
-confirm before moving on — and if the user wants to swap a step's tier, this is the moment.
+Before any code gets written, read the plan back to the user for sign-off. **Show every step the app will perform and
+the tier each one runs at, laid out as a table** — not a prose paragraph and not a bare bulleted list, because the
+whole point of the readback is to make the per-step tier decisions scannable so a wrong one jumps out. The table has
+four columns — **`#` (step number), `Step` (one logical action, described in the user's terms), `Tier`
+(deterministic / local / hosted, with the model named for local and hosted steps), and `Why` (the one-line
+justification for that tier)** — one row per step, in run order. This is the same four-column shape the worked examples
+in `references/steps.md` use, so the table the user signs off on is the same one the authoring model reasoned with. The
+app's name is shown clearly above the table. The reason for the table is purely economic: a tier disagreement caught
+here is a one-minute conversation; the same disagreement caught after the code exists is a rewrite, and a tier buried
+in a sentence is a tier the user skims past. So show the steps and their tiers in the table, show the name, and **close
+with the two choices presented as a selectable question — not a request to type a reply.** Use the AskUserQuestion tool
+to offer exactly two options: **"Confirm — build this plan as shown"** (recommended, listed first) and **"Alter the
+plan"** (change a step's tier, the app's name, or the approach — the skill revises and reads the plan back). The user
+signs off by *selecting*, not by typing `confirm`: the goal is to make building the app as low-friction as possible,
+so the one decision the user must make before code exists is a single click rather than a free-text reply they might
+skim past or word ambiguously. If they pick "Alter the plan," follow up for the specifics, revise, and read the
+updated plan back the same way. Making "alter" a first-class option — equal in weight to confirm, never buried — is the
+same move as proposing a default on an interview question: it turns sign-off into a quick reaction instead of a
+blank-page decision.
 
-Two presentation rules, because users skim: open the plan with a banner they can't scroll past, and end with a
-confirmation prompt that's visually unmistakable.
+Two presentation rules, because users skim: open the plan with a banner they can't scroll past, and end the readback
+with the selectable two-option sign-off (above) so the decision is unmistakable and one click away.
 
 ```
 ----------------------------------------
@@ -288,10 +332,34 @@ START OF PLAN
 ----------------------------------------
 ```
 
-at the top, the app name and numbered step list in the middle, and a bolded **"Reply `confirm` to proceed, or tell me
-what to change."** on its own line at the bottom. This is the one decision point the user has to make consciously before
-code exists, and an ask buried inside a wall of plan text is an ask the user waves through. Make both edges impossible to
-miss.
+at the top, then the app name and the step/tier table in the middle:
+
+```
+App: Manga Watcher
+
+| # | Step                                                        | Tier                                  | Why                                  |
+|---|-------------------------------------------------------------|---------------------------------------|--------------------------------------|
+| 1 | Read followed series URLs from SQLite                       | Deterministic                         | DB query                             |
+| 2 | Fetch each series' manga page over HTTP                     | Deterministic                         | HTTP GET — a precise rule            |
+| 3 | Parse the chapter list out of the HTML, dedup by URL        | Deterministic                         | Selector + regex fallback            |
+| 4 | Diff against SQLite, insert new chapters as unread          | Deterministic                         | Set diff                             |
+| 5 | Post one macOS notification if anything is new              | Deterministic                         | UNUserNotificationCenter             |
+| 6 | Render the window over the SQLite store                     | Deterministic                         | SwiftUI views                        |
+```
+
+Then, **don't end with a bare "okay?" and don't ask the user to type anything — present the two choices as a
+selectable question** (AskUserQuestion), recommend-first:
+
+- **Confirm — build this plan as shown** *(recommended)* — proceed to generate, build, and validate the app exactly as
+  laid out above.
+- **Alter the plan** — change a step's tier, the app's name, or the approach; the skill asks what to change, revises,
+  and reads the plan back.
+
+Presenting these as options the user picks rather than a phrase they type is what makes the sign-off effortless: the
+user just selects what they want and the build proceeds. This is the one decision point the user has to make
+consciously before code exists, and an ask buried inside a wall of plan text is an ask the user waves through — a
+two-button choice can't be waved through the same way. Keep "Alter the plan" exactly as prominent as "Confirm" so
+asking for changes reads as a first-class option, not a deviation.
 
 ## Stage 2 — Generate
 
@@ -336,7 +404,7 @@ root/workspaces/<app-name>/
 ├── README.md             # what the app does, how to run it — for the user
 ├── AUTHORING.md          # original request + authoring decisions — common to every OS
 ├── APP.md                # the app's contract: inputs, outputs, behavior, per-step tier
-└── <os>/                 # macos/ windows/ or linux/ — the current OS
+└── <os>/                 # mac-os/ windows/ or linux/ — the current OS
     ├── <os>-specific.md  # OS-specific interview answers and packaging notes
     ├── main.py           # the app entry point
     ├── build.{sh,bat}    # build script that produces the native artifact
@@ -379,11 +447,13 @@ it reads as broken even when it works. Also decode HTML entities at the point ou
 `Dave&#039;s &quot;news&quot;`. Deviate from the theme only when the user asked for something else and you recorded it in
 `AUTHORING.md`.
 
-**Framework order:** native first and recommended — on macOS that's **native Swift (SwiftUI)**, on Windows WinUI, on
-Linux GTK/Qt — then the cross-platform options *the host can actually build*, each with its size estimate, as covered
-in the interview. Name only the host's native toolkit; don't enumerate other platforms' frameworks (on a Mac,
-surfacing "Windows"/WinUI makes the user think they're building a Windows app). Cross-compilation is out — the skill
-builds for the current OS, full stop.
+**Framework order:** native first and heavily recommended — **on macOS that's native Swift (SwiftUI), the strongly
+weighted default for a Mac GUI** (smallest/fastest, most native-feeling, the toolkit the theme is tuned to, no extra
+toolchain) — on Windows WinUI, on Linux GTK/Qt — then the cross-platform options *the host can actually build*, each
+with its size estimate, as covered in the interview. Lead with SwiftUI on a Mac and let it stand unless the user
+explicitly wants a webview/Tailwind look or a stack they already run. Name only the host's native toolkit; don't
+enumerate other platforms' frameworks (on a Mac, surfacing "Windows"/WinUI makes the user think they're building a
+Windows app). Cross-compilation is out — the skill builds for the current OS, full stop.
 
 **Generate the tests too.** Alongside `main.py`, write tests derived from the input/output contract in `APP.md` —
 exact-match assertions for deterministic steps, looser schema/shape/sanity checks for model-backed steps, run against
@@ -450,7 +520,7 @@ than a redo. `references/editing.md` has the step-by-step. There are two flavors
   rebuild.
 - **The same app on a new OS** — the user has it on Windows and now wants it on their Mac. The behavior is already
   captured in the common files, so you don't redo the interview; you run *only* the OS-specific portion (UI framework,
-  scheduler glue, data path, keyring) and add a `macos/` folder next to the existing `windows/` without touching it. Use
+  scheduler glue, data path, keyring) and add a `mac-os/` folder next to the existing `windows/` without touching it. Use
   `setup_workspace.py --add-os`, which refuses to clobber an existing OS folder.
 
 **Whenever you modify an app, keep its docs in sync before you finish** — `APP.md` if behavior or the step plan moved,
